@@ -1,0 +1,103 @@
+PROJECT RULES – COURSE REV BOOKING ANALYSIS
+
+1. DO NOT CHANGE WITHOUT APPROVAL
+- Do not change the existing code, logic, database queries, analysis rules, report format, or project structure without my explicit approval.
+- If you think a change is required, explain what needs to change and why, then wait for my approval.
+- Do not automatically refactor or optimize existing code.
+
+2. EXPLAIN EVERY BUILD CHANGE
+- After making any approved change, explain clearly:
+  - What was changed
+  - Why it was changed
+  - How it works
+  - Which files were changed
+  - How the change affects the final report
+- Explain in simple English.
+
+3. DO NOT SKIP ANY CONVERSATION
+- Analyze EVERY conversation returned by the database query.
+- Never randomly skip, sample, truncate, or ignore conversations.
+- Every conversation must be accounted for in the final analysis.
+- If a conversation cannot be analyzed, mark it clearly as UNKNOWN/UNCLEAR and explain why.
+- Do not silently exclude conversations because the transcript is long, incomplete, unclear, or difficult to analyze.
+
+4. PRESERVE ALL EXISTING DATA
+- Never modify, delete, update, or insert data into the production database.
+- Database access must remain READ-ONLY.
+- Analysis must only read the required conversation/transcription data.
+
+5. DO NOT GUESS
+- Do not invent a failure reason when the conversation does not provide enough evidence.
+- Base the failure reason only on the actual conversation/transcript and available database data.
+- If the exact reason cannot be determined, use an appropriate UNKNOWN/UNCLEAR reason.
+
+6. ANALYZE THE ACTUAL CONVERSATION
+- Read the conversation flow from beginning to end.
+- Identify what the customer wanted.
+- Identify what the AI did.
+- Identify where the booking process stopped or failed.
+- Identify the actual reason the booking was not completed.
+- Do not classify a conversation only from a status field.
+
+7. FAILURE REASONS MUST BE SPECIFIC
+- Avoid generic reasons such as "Booking failed" or "Customer issue."
+- Clearly explain what happened.
+- Examples:
+  - Customer requested a tee time, but no available tee time was found.
+  - AI provided availability, but the customer disconnected before confirming.
+  - Booking process reached payment, but payment was not completed.
+  - AI failed to understand the customer's requested date/time.
+  - Call disconnected during the booking flow.
+  - System/tool error prevented the booking from being completed.
+
+8. KEEP BOOKING STATUS AND FAILURE REASON SEPARATE
+- Successful bookings must remain Successful.
+- Only non-completed conversations should be classified under Failure Reasons.
+- Do not create a failure reason for a successfully completed booking.
+
+9. COURSE MAPPING
+- Use the approved course-mapping logic already implemented in the project.
+- Do not introduce a new course-identification method without approval.
+- If a course cannot be confidently identified, keep it under Unknown Course rather than guessing.
+
+10. REPORT FORMAT
+- Do not change the existing report format without approval.
+- Keep the course-wise structure consistent.
+- Preserve:
+  - Total Calls
+  - Successful
+  - Not Completed
+  - Unclear
+  - Failure Reasons
+  - Repeated Issues
+- Keep Unknown Course at the end.
+
+11. REPEATED ISSUES
+- Only report a reason as a repeated issue when the same failure pattern is actually repeated.
+- Do not combine unrelated failures just because they sound similar.
+
+12. NO SILENT FALLBACKS
+- If something fails during analysis, do not silently use a different method.
+- Clearly report the issue and explain what happened.
+- Ask for approval before changing the approach.
+
+13. BEFORE RUNNING A LARGE ANALYSIS
+- For major changes, first explain the proposed approach.
+- Do not run a full production analysis until the logic has been reviewed/approved.
+- Test changes on a small sample first when appropriate.
+
+14. FINAL VALIDATION
+Before giving the final report, verify:
+- Every conversation was processed.
+- No conversations were silently skipped.
+- Total analyzed conversations match the expected input count.
+- Course totals are consistent.
+- Successful + Not Completed + Unclear totals are accounted for.
+- Failure reasons are based on actual conversation evidence.
+- No production data was modified.
+
+15. IMPORTANT
+- Accuracy is more important than speed.
+- Never optimize by skipping conversations.
+- Never change business logic without approval.
+- When in doubt, stop and ask me before making a change.
