@@ -6,5 +6,11 @@
 [functions]
   directory = "../netlify/functions"
 
-[functions.reports]
+[functions.course-reports]
   included_files = ["../reports/courses-*.txt"]
+
+[[redirects]]
+  from = "/api/reports"
+  to = "/.netlify/functions/course-reports"
+  status = 200
+  force = true
