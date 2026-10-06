@@ -58,7 +58,7 @@ function reportApi() {
     name: "report-api",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        const url = new URL(req.url || "/", "http://127.0.0.1")
+        const url = new URL(req.url || "/", "http://localhost")
         if (url.pathname === "/api/reports" && req.method === "GET") {
           const name = url.searchParams.get("name")
           if (!name) {
