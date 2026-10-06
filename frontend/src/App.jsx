@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Charts, TrendChart } from "./Charts.jsx"
 import { downloadCourseReport } from "./courseReportPdf.js"
 import { callText, courseText, filteredText, reasonText, summaryText } from "./copyText.js"
@@ -12,7 +12,6 @@ import {
   coursesForDate,
   coursesForDates,
   datesInRange,
-  defaultDate,
   groupCoursesByName,
   reasonNames,
   summarize,
@@ -25,9 +24,12 @@ function courseKey(course) {
 
 export default function App() {
   const [reports, setReports] = useState([])
+  const [dates, setDates] = useState([])
   const [status, setStatus] = useState("Loading saved reports…")
   const [copyMessage, setCopyMessage] = useState("")
   const [loading, setLoading] = useState(true)
+  const [listReady, setListReady] = useState(false)
+  const loadedDates = useRef(new Set())
   const [dateFilter, setDateFilter] = useState("")
   const [rangeFrom, setRangeFrom] = useState("")
   const [rangeTo, setRangeTo] = useState("")
@@ -45,40 +47,47 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
-    async function load() {
+    async function loadList() {
       try {
         const response = await fetch("/api/reports")
-        const body = await response.json()
-        if (!response.ok) throw new Error(body.error || "Could not list reports.")
-        const names = body.reports || []
-        const loaded = []
-        for (const name of names) {
-          const reportResponse = await fetch(`/api/reports?name=${encodeURIComponent(name)}`)
-          const reportBody = await reportResponse.json()
-          if (!reportResponse.ok) throw new Error(reportBody.error || `Could not read ${name}.`)
-          loaded.push(parseReport(reportBody.text || "", name))
-        }
+        const body = await response.json().catch(() => ({}))
+        if (!response.ok || !Array.isArray(body.reports)) throw new Error("list")
+        const found = [
+          ...new Set(
+            body.reports
+              .map((name) => {
+                const match = /^courses-(\d{4}-\d{2}-\d{2})\.txt$/.exec(String(name))
+                return match ? match[1] : ""
+              })
+              .filter(Boolean),
+          ),
+        ].sort().reverse()
         if (cancelled) return
-        const saved = loaded.filter((report) => report.date)
-        setReports(saved)
-        setDateFilter((current) => current || defaultDate(saved))
-        setStatus(saved.length ? "" : "No saved reports yet.")
-      } catch (error) {
-        if (!cancelled) setStatus(error.message || "Could not load saved reports.")
-      } finally {
-        if (!cancelled) setLoading(false)
+        const oldest = found[found.length - 1] || ""
+        const newest = found[0] || ""
+        setDates(found)
+        setDateFilter((current) => current || newest)
+        setCompareFrom((current) => current || oldest)
+        setCompareTo((current) => current || newest)
+        setDailyFrom((current) => current || oldest)
+        setDailyTo((current) => current || newest)
+        setListReady(true)
+        if (!found.length) {
+          setStatus("No saved reports yet.")
+          setLoading(false)
+        }
+      } catch {
+        if (!cancelled) {
+          setStatus("Unable to load report. Please try again.")
+          setLoading(false)
+        }
       }
     }
-    load()
+    loadList()
     return () => {
       cancelled = true
     }
   }, [])
-
-  const dates = useMemo(
-    () => [...new Set(reports.map((report) => report.date))].sort().reverse(),
-    [reports],
-  )
 
   const activeDates = useMemo(() => {
     if (!dateFilter) return []
@@ -119,12 +128,64 @@ export default function App() {
     return allCourses.filter((course) => course.name === selectedCourse.name && allowed.has(course.date))
   }, [allCourses, selectedCourse, activeDates])
 
+  const dailyDates = useMemo(
+    () => datesInRange(dates, dailyFrom, dailyTo),
+    [dates, dailyFrom, dailyTo],
+  )
+
+  const neededKey = useMemo(() => {
+    return [...new Set([...activeDates, ...comparisonDates, ...dailyDates])].sort().join(",")
+  }, [activeDates, comparisonDates, dailyDates])
+
   const courseComparisonDays = useMemo(() => {
     if (!selectedCourse) return []
-    const allowed = new Set(datesInRange(dates, dailyFrom, dailyTo))
+    const allowed = new Set(dailyDates)
     const rows = allCourses.filter((course) => course.name === selectedCourse.name && allowed.has(course.date))
     return compareCourseRows(rows)
-  }, [allCourses, selectedCourse, dates, dailyFrom, dailyTo])
+  }, [allCourses, selectedCourse, dailyDates])
+
+  useEffect(() => {
+    if (!listReady) return
+    const missing = neededKey ? neededKey.split(",").filter((date) => date && !loadedDates.current.has(date)) : []
+    if (!missing.length) {
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    async function loadMissing() {
+      try {
+        const loaded = []
+        for (const date of missing) {
+          const name = `courses-${date}.txt`
+          const response = await fetch(`/api/reports?name=${encodeURIComponent(name)}`)
+          const body = await response.json().catch(() => ({}))
+          if (!response.ok || typeof body.text !== "string") throw new Error("file")
+          const report = parseReport(body.text, body.name || name)
+          if (report.date !== date) throw new Error("file")
+          loaded.push(report)
+        }
+        if (cancelled) return
+        for (const report of loaded) loadedDates.current.add(report.date)
+        setReports((current) => {
+          const byDate = new Map(current.map((report) => [report.date, report]))
+          for (const report of loaded) byDate.set(report.date, report)
+          return [...byDate.values()]
+        })
+        setStatus("")
+        setLoading(false)
+      } catch {
+        if (!cancelled) {
+          setStatus("Unable to load report. Please try again.")
+          setLoading(false)
+        }
+      }
+    }
+    loadMissing()
+    return () => {
+      cancelled = true
+    }
+  }, [listReady, neededKey])
 
   const detail = useMemo(() => {
     if (!detailRows.length) {

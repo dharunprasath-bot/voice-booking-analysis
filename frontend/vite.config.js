@@ -107,9 +107,9 @@ function reportApi() {
           const write = (message) => {
             res.write(`${JSON.stringify(message)}\n`)
           }
-          write({ type: "status", text: `Running main.py --date ${date}` })
+          write({ type: "status", text: `Running backend/main.py --date ${date}` })
 
-          const child = spawn(pythonBin, ["main.py", "--date", date], {
+          const child = spawn(pythonBin, ["backend/main.py", "--date", date], {
             cwd: root,
             env: { ...process.env, PYTHONUNBUFFERED: "1" },
           })

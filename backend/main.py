@@ -1,8 +1,8 @@
 """Analyze AI voice booking conversations.
 
-    python3 main.py --date 2026-09-30
-    python3 main.py --course 17044862984 --date 2026-09-30
-    python3 main.py --fetch-courses --date 2026-09-30
+    python3 backend/main.py --date 2026-09-30
+    python3 backend/main.py --course 17044862984 --date 2026-09-30
+    python3 backend/main.py --fetch-courses --date 2026-09-30
 """
 
 from __future__ import annotations
@@ -108,7 +108,7 @@ def _save_report(report: str, course_name: str, report_date: str) -> Path:
         "-",
         report_date.lower().replace(" to ", "-to-"),
     ).strip("-") or "undated"
-    folder = Path(__file__).resolve().parent / "reports"
+    folder = Path(__file__).resolve().parent.parent / "reports"
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{slug}-{date_slug}.txt"
     text = report if report.endswith("\n") else report + "\n"
