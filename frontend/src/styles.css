@@ -1,15 +1,18 @@
 :root {
-  color: #e7eef8;
-  background: #0b1220;
+  color: #f3f4f6;
+  background: #0c0e12;
   font-family: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  --bg: #0b1220;
-  --surface: #121a2b;
-  --surface-2: #182235;
-  --line: #2a3650;
-  --text: #e7eef8;
-  --muted: #93a4bd;
-  --accent: #2dd4bf;
-  --accent-ink: #042f2e;
+  --bg: #0c0e12;
+  --surface: #161a21;
+  --surface-2: #1c212b;
+  --line: #313a4a;
+  --text: #f3f4f6;
+  --muted: #9aa3b2;
+  --good: #3dd68c;
+  --bad: #f07178;
+  --warn: #e6b325;
+  --accent: #f3f4f6;
+  --accent-ink: #0c0e12;
 }
 
 * {
@@ -40,7 +43,7 @@ body {
   height: 100vh;
   padding: 18px 12px;
   border-right: 1px solid var(--line);
-  background: #101828;
+  background: #12151b;
 }
 
 .sidebar-brand {
@@ -57,9 +60,10 @@ body {
   place-items: center;
   width: 32px;
   height: 32px;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--surface-2);
+  color: var(--text);
   font-size: 12px;
   font-weight: 750;
 }
@@ -100,7 +104,7 @@ body {
 }
 
 .sidebar nav button.active {
-  color: var(--accent);
+  color: var(--text);
 }
 
 .nav-icon {
@@ -214,7 +218,7 @@ header p,
 }
 
 .back:hover {
-  border-color: var(--accent);
+  border-color: #4b5568;
 }
 
 .course-row {
@@ -235,7 +239,7 @@ header p,
 
 .course-row:hover,
 .course-row:focus-visible {
-  border-color: var(--accent);
+  border-color: #4b5568;
 }
 
 .course-row > span {
@@ -292,7 +296,7 @@ select,
 input:focus,
 select:focus,
 .date-menu-button:focus-visible {
-  outline: 2px solid rgba(45, 212, 191, 0.45);
+  outline: 2px solid rgba(154, 163, 178, 0.45);
   outline-offset: 1px;
 }
 
@@ -346,8 +350,8 @@ select:focus,
 .date-menu-list button.selected,
 .date-menu-list button:hover,
 .date-menu-list button:focus-visible {
-  background: rgba(45, 212, 191, 0.14);
-  color: var(--accent);
+  background: #252b36;
+  color: var(--text);
 }
 
 .summary,
@@ -396,13 +400,13 @@ select:focus,
 
 .view:hover,
 .clear:hover {
-  border-color: var(--accent);
+  border-color: #4b5568;
 }
 
 .view.active {
-  border-color: var(--accent);
-  background: rgba(45, 212, 191, 0.14);
-  color: var(--accent);
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -438,6 +442,18 @@ select:focus,
   margin-top: 6px;
   font-size: 24px;
   font-weight: 680;
+}
+
+.card.good strong {
+  color: var(--good);
+}
+
+.card.bad strong {
+  color: var(--bad);
+}
+
+.card.warn strong {
+  color: var(--warn);
 }
 
 .card-detail {
@@ -499,7 +515,7 @@ select:focus,
 }
 
 .comparison tbody tr:hover {
-  background: rgba(45, 212, 191, 0.06);
+  background: rgba(243, 244, 246, 0.04);
 }
 
 .comparison th {
@@ -524,11 +540,11 @@ select:focus,
 }
 
 .change.up {
-  color: #5eead4;
+  color: var(--good);
 }
 
 .change.down {
-  color: #fb923c;
+  color: var(--bad);
 }
 
 .change.same,
@@ -628,11 +644,11 @@ select:focus,
 .bar-fill {
   display: block;
   height: 100%;
-  background: #7dd3fc;
+  background: var(--bad);
 }
 
 .conversion-fill {
-  background: var(--accent);
+  background: var(--good);
 }
 
 .conversion-bars {
@@ -690,8 +706,8 @@ select:focus,
   margin-left: 10px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(45, 212, 191, 0.14);
-  color: var(--accent);
+  background: #252b36;
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -706,15 +722,15 @@ select:focus,
 .copy {
   height: 34px;
   padding: 0 12px;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--surface-2);
+  color: var(--text);
   white-space: nowrap;
-  transition: filter 0.15s ease;
 }
 
 .copy:hover:not(:disabled) {
-  filter: brightness(1.08);
+  border-color: #4b5568;
 }
 
 .copy:disabled {

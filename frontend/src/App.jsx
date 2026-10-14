@@ -441,6 +441,10 @@ export default function App() {
             <span className="nav-icon" aria-hidden="true">☰</span>
             <span>Course list</span>
           </button>
+          <button type="button" className={page === "comparison" ? "active" : ""} onClick={() => openPage("comparison")}>
+            <span className="nav-icon" aria-hidden="true">↗</span>
+            <span>Daily Comparison</span>
+          </button>
         </nav>
         <button type="button" className="nav-collapse" onClick={() => setNavCollapsed((current) => !current)}>
           <span className="nav-icon" aria-hidden="true">{navCollapsed ? "›" : "‹"}</span>
@@ -458,7 +462,7 @@ export default function App() {
         <div>
           <h1>Course booking reports</h1>
           <p>
-            {page === "overview" ? "Overall dashboard" : page === "courses" ? "Course list" : "Course detail"}
+            {page === "overview" ? "Overall dashboard" : page === "courses" ? "Course list" : page === "comparison" ? "Daily Comparison" : "Course detail"}
           </p>
         </div>
         {page === "overview" ? (
@@ -485,6 +489,7 @@ export default function App() {
         ) : null}
       </header>
 
+      {page === "comparison" ? null : (
       <section className={`filters overview-filters${dateFilter === "range" ? " range-filters" : ""}`} aria-label="Report filters">
         <label>
           Date
@@ -520,8 +525,9 @@ export default function App() {
           </>
         ) : null}
       </section>
+      )}
 
-      {page === "overview" ? null : (
+      {page === "courses" || page === "detail" ? (
         <div className="sticky-bar">
           <button
             type="button"
@@ -537,7 +543,7 @@ export default function App() {
             </button>
           ) : null}
         </div>
-      )}
+      ) : null}
 
       <p className="status" role="status">
         {status || copyMessage}
@@ -550,14 +556,20 @@ export default function App() {
           reasonGroups={overview.reasonGroups}
           copiedId={copiedId}
           onCopy={copy}
-          comparisonDays={comparisonDays}
-          compareFrom={compareFrom}
-          compareTo={compareTo}
+          onOpenCourses={() => setPage("courses")}
+        />
+      ) : null}
+
+      {ready && page === "comparison" ? (
+        <DateComparison
+          title="Daily Comparison"
+          days={comparisonDays}
+          from={compareFrom}
+          to={compareTo}
           earliestDate={dates[dates.length - 1] || ""}
           latestDate={dates[0] || ""}
-          onCompareFrom={setCompareFrom}
-          onCompareTo={setCompareTo}
-          onOpenCourses={() => setPage("courses")}
+          onFrom={setCompareFrom}
+          onTo={setCompareTo}
         />
       ) : null}
 
@@ -642,13 +654,6 @@ function Overview({
   summary,
   courses,
   reasonGroups,
-  comparisonDays,
-  compareFrom,
-  compareTo,
-  earliestDate,
-  latestDate,
-  onCompareFrom,
-  onCompareTo,
   copiedId,
   onCopy,
   onOpenCourses,
@@ -678,15 +683,6 @@ function Overview({
       ) : (
         <p className="empty">No matching records found.</p>
       )}
-      <DateComparison
-        days={comparisonDays}
-        from={compareFrom}
-        to={compareTo}
-        earliestDate={earliestDate}
-        latestDate={latestDate}
-        onFrom={onCompareFrom}
-        onTo={onCompareTo}
-      />
     </>
   )
 }
@@ -1006,9 +1002,9 @@ function SummaryCards({ summary }) {
   return (
     <div className="cards">
       <SummaryCard label="Total Calls" value={summary.totalCalls} />
-      <SummaryCard label="Successful Bookings" value={summary.successful} />
-      <SummaryCard label="Booking Not Completed" value={summary.notCompleted} />
-      <SummaryCard label="Unclear Calls" value={summary.unclear} />
+      <SummaryCard label="Successful Bookings" value={summary.successful} tone="good" />
+      <SummaryCard label="Booking Not Completed" value={summary.notCompleted} tone="bad" />
+      <SummaryCard label="Unclear Calls" value={summary.unclear} tone="warn" />
       <SummaryCard label="Conversion" value={summary.conversion} />
     </div>
   )
@@ -1023,9 +1019,9 @@ function Metric({ label, value }) {
   )
 }
 
-function SummaryCard({ label, value }) {
+function SummaryCard({ label, value, tone = "" }) {
   return (
-    <article className="card" data-summary={label}>
+    <article className={`card${tone ? ` ${tone}` : ""}`} data-summary={label}>
       <p>{label}</p>
       <strong>{value}</strong>
     </article>
