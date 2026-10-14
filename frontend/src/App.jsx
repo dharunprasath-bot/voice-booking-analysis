@@ -22,6 +22,99 @@ function courseKey(course) {
   return `${course.date}|${course.name}`
 }
 
+function DateMenu({ value, dates, disabled, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [menuBox, setMenuBox] = useState(null)
+  const rootRef = useRef(null)
+  const options = [
+    { value: "all", label: "All dates" },
+    { value: "range", label: "Custom range" },
+    ...dates.map((date) => ({ value: date, label: date })),
+  ]
+  const current = options.find((option) => option.value === value)
+  const label = current ? current.label : "Loading dates…"
+
+  function place() {
+    const button = rootRef.current?.querySelector(".date-menu-button")
+    if (!button) return
+    const rect = button.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    const spaceAbove = rect.top
+    const dropUp = spaceBelow < 280 && spaceAbove > spaceBelow
+    setMenuBox({
+      position: "fixed",
+      left: `${Math.round(rect.left)}px`,
+      width: `${Math.round(rect.width)}px`,
+      maxHeight: "240px",
+      zIndex: 50,
+      ...(dropUp
+        ? { bottom: `${Math.round(window.innerHeight - rect.top + 4)}px` }
+        : { top: `${Math.round(rect.bottom + 4)}px` }),
+    })
+  }
+
+  useEffect(() => {
+    if (!open) return undefined
+    function onPointer(event) {
+      if (!rootRef.current?.contains(event.target)) setOpen(false)
+    }
+    function onKey(event) {
+      if (event.key === "Escape") setOpen(false)
+    }
+    document.addEventListener("mousedown", onPointer)
+    document.addEventListener("keydown", onKey)
+    window.addEventListener("resize", place)
+    window.addEventListener("scroll", place, true)
+    return () => {
+      document.removeEventListener("mousedown", onPointer)
+      document.removeEventListener("keydown", onKey)
+      window.removeEventListener("resize", place)
+      window.removeEventListener("scroll", place, true)
+    }
+  }, [open])
+
+  function toggle() {
+    if (disabled) return
+    if (!open) place()
+    setOpen((currentOpen) => !currentOpen)
+  }
+
+  return (
+    <div className="date-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="date-menu-button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={toggle}
+      >
+        {label}
+      </button>
+      {open ? (
+        <ul className="date-menu-list" role="listbox" aria-label="Date" style={menuBox || undefined}>
+          {options.map((option) => (
+            <li key={option.value}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                className={option.value === value ? "selected" : ""}
+                onClick={() => {
+                  onChange(option.value)
+                  setOpen(false)
+                }}
+              >
+                {option.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  )
+}
+
 export default function App() {
   const [reports, setReports] = useState([])
   const [dates, setDates] = useState([])
@@ -44,6 +137,8 @@ export default function App() {
   const [openReasons, setOpenReasons] = useState({})
   const [openCalls, setOpenCalls] = useState({})
   const [copiedId, setCopiedId] = useState("")
+  const [navCollapsed, setNavCollapsed] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -325,9 +420,41 @@ export default function App() {
     }, 1600)
   }
 
+  function openPage(nextPage) {
+    setPage(nextPage)
+    setNavOpen(false)
+  }
+
   return (
+    <div className={`app-shell${navCollapsed ? " nav-collapsed" : ""}${navOpen ? " nav-open" : ""}`}>
+      <aside className="sidebar" aria-label="Dashboard">
+        <div className="sidebar-brand">
+          <span className="brand-mark" aria-hidden="true">CR</span>
+          <span className="brand-name">CourseRev</span>
+        </div>
+        <nav>
+          <button type="button" className={page === "overview" ? "active" : ""} onClick={() => openPage("overview")}>
+            <span className="nav-icon" aria-hidden="true">▦</span>
+            <span>Dashboard</span>
+          </button>
+          <button type="button" className={page === "courses" || page === "detail" ? "active" : ""} onClick={() => openPage("courses")}>
+            <span className="nav-icon" aria-hidden="true">☰</span>
+            <span>Course list</span>
+          </button>
+        </nav>
+        <button type="button" className="nav-collapse" onClick={() => setNavCollapsed((current) => !current)}>
+          <span className="nav-icon" aria-hidden="true">{navCollapsed ? "›" : "‹"}</span>
+          <span>{navCollapsed ? "Expand" : "Collapse"}</span>
+        </button>
+      </aside>
+      {navOpen ? (
+        <button type="button" className="nav-backdrop" aria-label="Close menu" onClick={() => setNavOpen(false)} />
+      ) : null}
     <main data-page={page}>
       <header>
+        <button type="button" className="nav-toggle" aria-label="Open menu" onClick={() => setNavOpen(true)}>
+          ☰
+        </button>
         <div>
           <h1>Course booking reports</h1>
           <p>
@@ -361,20 +488,12 @@ export default function App() {
       <section className={`filters overview-filters${dateFilter === "range" ? " range-filters" : ""}`} aria-label="Report filters">
         <label>
           Date
-          <select
+          <DateMenu
             value={dateFilter || ""}
-            onChange={(event) => changeDate(event.target.value)}
+            dates={dates}
             disabled={!dates.length}
-          >
-            {!dateFilter ? <option value="">Loading dates…</option> : null}
-            <option value="all">All dates</option>
-            <option value="range">Custom range</option>
-            {dates.map((date) => (
-              <option key={date} value={date}>
-                {date}
-              </option>
-            ))}
-          </select>
+            onChange={changeDate}
+          />
         </label>
         {dateFilter === "range" ? (
           <>
@@ -485,6 +604,7 @@ export default function App() {
         />
       ) : null}
     </main>
+    </div>
   )
 }
 

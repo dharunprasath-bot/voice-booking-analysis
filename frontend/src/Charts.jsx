@@ -15,23 +15,23 @@ export function TrendChart({ days }) {
   return (
     <div className="trend">
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daily trend for calls and successful bookings">
-        <line x1={pad.left} y1={pad.top} x2={pad.left} y2={pad.top + innerHeight} stroke="#e4e7eb" />
-        <line x1={pad.left} y1={pad.top + innerHeight} x2={pad.left + innerWidth} y2={pad.top + innerHeight} stroke="#e4e7eb" />
-        <path d={pathFor("totalCalls")} fill="none" stroke="#1d4e89" strokeWidth="2.5" />
-        <path d={pathFor("successful")} fill="none" stroke="#0f766e" strokeWidth="2.5" />
+        <line x1={pad.left} y1={pad.top} x2={pad.left} y2={pad.top + innerHeight} stroke="#334155" />
+        <line x1={pad.left} y1={pad.top + innerHeight} x2={pad.left + innerWidth} y2={pad.top + innerHeight} stroke="#334155" />
+        <path d={pathFor("totalCalls")} fill="none" stroke="#7dd3fc" strokeWidth="2.5" />
+        <path d={pathFor("successful")} fill="none" stroke="#2dd4bf" strokeWidth="2.5" />
         {days.map((day, index) => (
           <g key={day.date}>
-            <circle cx={xAt(index)} cy={yAt(day.totalCalls)} r="3.5" fill="#1d4e89" />
-            <circle cx={xAt(index)} cy={yAt(day.successful)} r="3.5" fill="#0f766e" />
-            <text x={xAt(index)} y={height - 12} textAnchor="middle" fontSize="11" fill="#52606d">
+            <circle cx={xAt(index)} cy={yAt(day.totalCalls)} r="3.5" fill="#7dd3fc" />
+            <circle cx={xAt(index)} cy={yAt(day.successful)} r="3.5" fill="#2dd4bf" />
+            <text x={xAt(index)} y={height - 12} textAnchor="middle" fontSize="11" fill="#93a4bd">
               {day.date.slice(5)}
             </text>
           </g>
         ))}
       </svg>
       <div className="trend-legend">
-        <span><i className="swatch" style={{ background: "#1d4e89" }} /> Total Calls</span>
-        <span><i className="swatch" style={{ background: "#0f766e" }} /> Successful Bookings</span>
+        <span><i className="swatch" style={{ background: "#7dd3fc" }} /> Total Calls</span>
+        <span><i className="swatch" style={{ background: "#2dd4bf" }} /> Successful Bookings</span>
       </div>
     </div>
   )
@@ -57,9 +57,9 @@ export function Charts({ summary, reasonGroups, courses, showConversion = false 
 
 function OutcomePie({ summary }) {
   const parts = [
-    { label: "Successful Bookings", value: summary.successful, color: "#0f766e" },
-    { label: "Booking Not Completed", value: summary.notCompleted, color: "#c2410c" },
-    { label: "Unclear Calls", value: summary.unclear, color: "#64748b" },
+    { label: "Successful Bookings", value: summary.successful, color: "#2dd4bf" },
+    { label: "Booking Not Completed", value: summary.notCompleted, color: "#fb923c" },
+    { label: "Unclear Calls", value: summary.unclear, color: "#94a3b8" },
   ]
   const total = parts.reduce((sum, part) => sum + part.value, 0)
   let cursor = 0
@@ -72,7 +72,7 @@ function OutcomePie({ summary }) {
             return `${part.color} ${start}% ${cursor}%`
           })
           .join(", ")
-      : "#e4e7eb 0% 100%"
+      : "#243044 0% 100%"
 
   return (
     <article className="chart" data-chart="outcomes">
