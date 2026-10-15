@@ -78,6 +78,13 @@ function reportApi() {
         }
 
         if (url.pathname === "/api/run" && req.method === "POST") {
+          const origin = req.headers.origin
+          const sameOrigin = !origin || origin === `http://${req.headers.host}`
+          const isJson = String(req.headers["content-type"] || "").startsWith("application/json")
+          if (!sameOrigin || !isJson) {
+            sendJson(res, 403, { error: "Request not allowed." })
+            return
+          }
           if (runInProgress) {
             sendJson(res, 409, { error: "A report is already running." })
             return

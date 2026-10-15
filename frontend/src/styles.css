@@ -136,10 +136,23 @@ select {
 }
 
 main {
+  width: 100%;
   min-width: 0;
-  max-width: 1180px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 28px 24px 56px;
+  padding: 28px 28px 56px;
+}
+
+main > .chart {
+  margin-top: 18px;
+}
+
+.course-row-name strong,
+.summary-head h2,
+.bar-label,
+.calls p,
+.reason-head button {
+  overflow-wrap: anywhere;
 }
 
 header {
@@ -384,7 +397,13 @@ select:focus,
 
 .views {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.summary-head,
+.summary-actions {
+  flex-wrap: wrap;
 }
 
 .view,
@@ -466,9 +485,13 @@ select:focus,
 
 .charts {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
   gap: 18px;
   margin-top: 18px;
+}
+
+.charts > * {
+  min-width: 0;
 }
 
 .chart {
@@ -851,7 +874,28 @@ select:focus,
 }
 
 @media (max-width: 640px) {
-  header,
+  main {
+    padding: 18px 14px 40px;
+  }
+
+  header {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  header > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  header > .copy {
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
   .course-head,
   .reason-head,
   .call-head,
@@ -866,8 +910,91 @@ select:focus,
   }
 
   .filters,
-  .cards,
   .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card strong {
+    font-size: 20px;
+  }
+
+  .summary,
+  .course,
+  .chart {
+    padding: 14px;
+  }
+
+  .summary-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .summary-actions {
+    flex-direction: row;
+  }
+
+  .views > *,
+  .summary-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .nav-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sticky-bar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sticky-bar .sticky-date {
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  .sticky-bar .back,
+  .sticky-bar .clear {
+    flex: 1 1 0;
+  }
+
+  input,
+  select,
+  .date-menu-button,
+  .copy,
+  .view,
+  .clear,
+  .back,
+  .sidebar nav button {
+    min-height: 44px;
+  }
+
+  .bars li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+  }
+
+  .bars .bar-label {
+    grid-column: 1 / -1;
+  }
+
+  .trend {
+    overflow-x: auto;
+  }
+
+  .trend svg {
+    min-width: 520px;
+  }
+}
+
+@media (max-width: 380px) {
+  .cards {
     grid-template-columns: 1fr;
   }
 }
