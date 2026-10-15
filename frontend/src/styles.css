@@ -159,8 +159,13 @@ header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: end;
+  align-items: center;
   margin-bottom: 22px;
+}
+
+header > div {
+  flex: 1;
+  min-width: 0;
 }
 
 h1,
@@ -208,11 +213,26 @@ header p,
 }
 
 .sticky-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   position: sticky;
   top: 0;
   z-index: 5;
   padding: 12px 0;
   background: var(--bg);
+}
+
+.sticky-bar .back {
+  justify-self: start;
+}
+
+.sticky-bar .sticky-date {
+  justify-self: center;
+  text-align: center;
+}
+
+.sticky-bar .clear {
+  justify-self: end;
 }
 
 .sticky-date {
@@ -236,8 +256,9 @@ header p,
 
 .course-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.5fr) repeat(5, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: minmax(0, 1.7fr) repeat(5, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: stretch;
   width: 100%;
   margin-top: 12px;
   padding: 14px;
@@ -256,20 +277,30 @@ header p,
 }
 
 .course-row > span {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
   letter-spacing: 0.03em;
+  line-height: 1.25;
   text-transform: uppercase;
+}
+
+.course-row-name {
+  justify-content: center;
 }
 
 .course-row strong {
   display: block;
-  margin-top: 4px;
+  margin-top: 0;
   color: var(--text);
   font-size: 18px;
   letter-spacing: 0;
+  line-height: 1.2;
   text-transform: none;
 }
 
@@ -378,13 +409,34 @@ select:focus,
 }
 
 .summary-head,
-.course-head,
-.reason-head,
-.call-head {
+.course-head {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+}
+
+.reason-head,
+.call-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px 140px;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.reason-head > button:first-child,
+.call-head > p {
+  min-width: 0;
+  text-align: left;
+}
+
+.reason-head .view,
+.reason-head .copy,
+.call-head .view,
+.call-head .copy {
+  width: 100%;
+  height: 36px;
+  white-space: nowrap;
 }
 
 .toolbar {
@@ -432,13 +484,17 @@ select:focus,
 .cards,
 .metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin-top: 16px;
 }
 
 .card,
 .metrics div {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -458,7 +514,7 @@ select:focus,
 .card strong,
 .metrics dd {
   display: block;
-  margin-top: 6px;
+  margin-top: 0;
   font-size: 24px;
   font-weight: 680;
 }
@@ -534,7 +590,13 @@ select:focus,
   padding: 10px 8px;
   border-bottom: 1px solid var(--line);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.comparison th:not(:first-child),
+.comparison td:not(:first-child) {
+  text-align: right;
 }
 
 .comparison tbody tr:hover {
@@ -637,14 +699,19 @@ select:focus,
 .legend li,
 .bars li {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(80px, 1fr) auto;
+  grid-template-columns: minmax(0, 1.4fr) minmax(80px, 1fr) 4.5em;
   gap: 10px;
   align-items: center;
   margin-top: 8px;
 }
 
 .legend li {
-  grid-template-columns: 14px minmax(0, 1fr) auto;
+  grid-template-columns: 14px minmax(0, 1fr) 4.5em;
+}
+
+.bars li > strong,
+.legend li > strong {
+  text-align: right;
 }
 
 .swatch {
@@ -697,8 +764,7 @@ select:focus,
 }
 
 .course-toggle,
-.reason-head button,
-.copy {
+.reason-head > button:first-child {
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -736,14 +802,24 @@ select:focus,
 }
 
 .course-toggle > span:last-child,
-.reason-head button {
+.reason-head > button:first-child {
   color: var(--accent);
   font-size: 14px;
   font-weight: 650;
 }
 
+.reason-head .view,
+.call-head .view {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: inherit;
+  font-weight: 650;
+}
+
 .copy {
-  height: 34px;
+  height: 36px;
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -763,6 +839,11 @@ select:focus,
 
 .reasons {
   margin-top: 14px;
+}
+
+.reason .reasons {
+  margin-top: 4px;
+  margin-bottom: 0;
 }
 
 .reasons h3 {
@@ -865,8 +946,6 @@ select:focus,
 
   .pie-row,
   .toolbar,
-  .sticky-bar,
-  .summary-actions,
   .list-tools {
     align-items: stretch;
     flex-direction: column;
@@ -897,12 +976,21 @@ select:focus,
   }
 
   .course-head,
-  .reason-head,
-  .call-head,
   .course-toggle,
   .course-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .reason-head,
+  .call-head {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+
+  .reason-head > button:first-child,
+  .call-head > p {
+    grid-column: 1 / -1;
   }
 
   .course-row {
@@ -916,6 +1004,10 @@ select:focus,
 
   .cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cards .card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .card strong {
@@ -939,7 +1031,7 @@ select:focus,
 
   .views > *,
   .summary-actions > * {
-    flex: 1 1 auto;
+    flex: 1 1 0;
   }
 
   .nav-toggle {
@@ -948,6 +1040,7 @@ select:focus,
   }
 
   .sticky-bar {
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;

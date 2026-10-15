@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { groupAbandonedCalls } from "./abandonedStage.js"
 import { Charts, TrendChart } from "./Charts.jsx"
 import { downloadCourseReport } from "./courseReportPdf.js"
 import { callText, courseText, filteredText, reasonText, summaryText } from "./copyText.js"
@@ -940,7 +941,20 @@ function CourseDetail({
                   onCopy={() => onCopy(`reason:${key}`, reasonText(course, reason))}
                 />
               </div>
-              {open ? (
+              {open && reason.reason === "Customer Abandoned" ? (
+                <AbandonedStages
+                  calls={reason.calls}
+                  course={course}
+                  reasonName={reason.reason}
+                  openReasons={openReasons}
+                  openCalls={openCalls}
+                  copiedId={copiedId}
+                  onToggleReason={onToggleReason}
+                  onToggleCall={onToggleCall}
+                  onCopy={onCopy}
+                />
+              ) : null}
+              {open && reason.reason !== "Customer Abandoned" ? (
                 <CallList
                   calls={reason.calls}
                   course={course}
@@ -956,6 +970,51 @@ function CourseDetail({
         })}
       </section>
     </>
+  )
+}
+
+function AbandonedStages({
+  calls,
+  course,
+  reasonName,
+  openReasons,
+  openCalls,
+  copiedId,
+  onToggleReason,
+  onToggleCall,
+  onCopy,
+}) {
+  const stages = groupAbandonedCalls(calls)
+  return (
+    <div className="reasons">
+      {stages.map((stage) => {
+        const key = `${courseKey(course)}|${reasonName}|${stage.stage}`
+        const open = Boolean(openReasons[key])
+        return (
+          <div className="reason" key={key} data-stage={stage.stage} data-count={stage.calls.length}>
+            <div className="reason-head">
+              <button type="button" onClick={() => onToggleReason(key)}>
+                {stage.stage} — {stage.calls.length}
+              </button>
+              <button type="button" className="view" onClick={() => onToggleReason(key)}>
+                {open ? "Hide details" : "View details"}
+              </button>
+            </div>
+            {open ? (
+              <CallList
+                calls={stage.calls}
+                course={course}
+                reasonName={`${reasonName}|${stage.stage}`}
+                openCalls={openCalls}
+                copiedId={copiedId}
+                onToggleCall={onToggleCall}
+                onCopy={onCopy}
+              />
+            ) : null}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
