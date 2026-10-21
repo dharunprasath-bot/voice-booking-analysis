@@ -220,9 +220,16 @@ def fetch_coursewise_conversations(
             c.booking_data,
             c.call_outcome,
             c.messages,
+            c.golf_course_id,
+            c.organization_id,
+            c.config_level,
+            g.golf_course_name,
+            o.org_name AS organization_name,
             b.status AS booking_record_status
         FROM public.conversations AS c
         LEFT JOIN public.bookings AS b ON b.id = c.booking_id
+        LEFT JOIN public.golf_courses AS g ON g.id = c.golf_course_id
+        LEFT JOIN public.organizations AS o ON o.id = c.organization_id
         WHERE """ + " AND ".join(where) + """
         ORDER BY c.created_at DESC
     """
@@ -248,25 +255,15 @@ def fetch_coursewise_conversations(
                 "booking_data": _parse_booking_data(row["booking_data"]),
                 "call_outcome": row["call_outcome"],
                 "messages": _parse_messages(row["messages"]),
+                "golf_course_id": row["golf_course_id"],
+                "organization_id": row["organization_id"],
+                "config_level": row["config_level"],
+                "golf_course_name": row["golf_course_name"],
+                "organization_name": row["organization_name"],
                 "booking_record_status": row["booking_record_status"],
             }
         )
     return conversations
-
-
-def fetch_golf_course_names(connection: psycopg.Connection) -> list[str]:
-    """Return official course names. Used only to normalize a spoken welcome name."""
-    sql = """
-        SELECT golf_course_name
-        FROM public.golf_courses
-        WHERE golf_course_name IS NOT NULL
-          AND btrim(golf_course_name) <> ''
-        ORDER BY length(golf_course_name) DESC, golf_course_name
-    """
-    assert_select_only(sql)
-    with connection.cursor() as cursor:
-        cursor.execute(sql)
-        return [row[0] for row in cursor.fetchall()]
 
 
 def _parse_messages(value):

@@ -30,7 +30,6 @@ from database import (
     connect,
     fetch_conversations,
     fetch_coursewise_conversations,
-    fetch_golf_course_names,
     fetch_ten_course_counts,
 )
 from report import build_coursewise_report, build_report
@@ -69,7 +68,8 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Limit the older single-course report to this voice line "
-            "(vapi_golf_course_phone_no). Omit this to group every call by welcome name."
+            "(vapi_golf_course_phone_no). Omit this to group every call by its "
+            "golf course id or organization id."
         ),
     )
     parser.add_argument(
@@ -219,7 +219,6 @@ def _run_coursewise(args: argparse.Namespace) -> int:
             customer_phone=args.phone,
             timezone_name=args.timezone,
         )
-        official_names = fetch_golf_course_names(connection)
     print(
         f"Fetched {len(conversations)} conversation(s) for {args.date.isoformat()}.",
         file=sys.stderr,
@@ -228,7 +227,7 @@ def _run_coursewise(args: argparse.Namespace) -> int:
         print("No conversations matched the date.", file=sys.stderr)
         return 0
 
-    assign_courses(conversations, official_names)
+    assign_courses(conversations)
     analyses = [None] * len(conversations)
     pending = []
     for index, conversation in enumerate(conversations):
