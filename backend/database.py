@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from datetime import date, datetime
 
 import psycopg
@@ -23,6 +24,24 @@ FORBIDDEN = re.compile(
 
 class ReadOnlyViolation(RuntimeError):
     """Raised when a query could change production data."""
+
+
+class DatabaseConnectionError(RuntimeError):
+    """Raised when a read-only connection still fails after retries."""
+
+
+CONNECTION_ATTEMPTS = 5
+CONNECTION_RETRY_DELAY_SECONDS = 10
+
+
+def is_transient_connection_error(error: BaseException) -> bool:
+    """True for a dropped or timed-out connection. Query and permission errors stay fatal."""
+    if isinstance(error, (KeyboardInterrupt, SystemExit, ReadOnlyViolation)):
+        return False
+    return isinstance(
+        error,
+        (psycopg.OperationalError, psycopg.InterfaceError, TimeoutError, ConnectionError),
+    )
 
 
 def assert_select_only(sql: str) -> None:
@@ -54,13 +73,45 @@ def connect() -> psycopg.Connection:
         connect_timeout=15,
         options="-c default_transaction_read_only=on",
     )
-    with connection.cursor() as cursor:
-        cursor.execute("SHOW default_transaction_read_only")
-        mode = cursor.fetchone()[0]
-    if str(mode).lower() != "on":
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SHOW default_transaction_read_only")
+            mode = cursor.fetchone()[0]
+        if str(mode).lower() != "on":
+            raise ReadOnlyViolation("PostgreSQL did not enable read-only mode.")
+    except Exception:
         connection.close()
-        raise ReadOnlyViolation("PostgreSQL did not enable read-only mode.")
+        raise
     return connection
+
+
+def call_with_connection(
+    operation,
+    *,
+    description: str,
+    attempts: int = CONNECTION_ATTEMPTS,
+    delay_seconds: float = CONNECTION_RETRY_DELAY_SECONDS,
+    sleeper=time.sleep,
+    on_retry=None,
+):
+    """Run a read-only operation, retrying only transient connection failures."""
+    last_error: BaseException | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with connect() as connection:
+                return operation(connection)
+        except Exception as error:
+            if not is_transient_connection_error(error):
+                raise
+            last_error = error
+            if attempt >= attempts:
+                break
+            if on_retry is not None:
+                on_retry(attempt, attempts, error, delay_seconds)
+            sleeper(delay_seconds)
+    raise DatabaseConnectionError(
+        f"{description}: database connection failed after {attempts} attempts. {last_error}"
+    ) from last_error
 
 
 def _digits(value: str | None) -> str:
@@ -225,11 +276,77 @@ def fetch_coursewise_conversations(
             c.config_level,
             g.golf_course_name,
             o.org_name AS organization_name,
-            b.status AS booking_record_status
+            o.org_type AS organization_type,
+            b.status AS booking_record_status,
+            voice.voice_golf_config_count,
+            voice.voice_golf_id_count,
+            voice.voice_org_only_config_count,
+            voice.voice_org_only_id_count,
+            voice.voice_blank_config_count,
+            voice.voice_golf_course_id,
+            voice.voice_golf_course_name,
+            voice.voice_config_course_name,
+            voice.voice_organization_id,
+            voice.voice_organization_name,
+            voice.voice_config_org_name
         FROM public.conversations AS c
         LEFT JOIN public.bookings AS b ON b.id = c.booking_id
         LEFT JOIN public.golf_courses AS g ON g.id = c.golf_course_id
         LEFT JOIN public.organizations AS o ON o.id = c.organization_id
+        LEFT JOIN LATERAL (
+            SELECT
+                COUNT(DISTINCT vcc.id) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                ) AS voice_golf_config_count,
+                COUNT(DISTINCT vcc.golf_course_id) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                ) AS voice_golf_id_count,
+                COUNT(DISTINCT vcc.id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                ) AS voice_org_only_config_count,
+                COUNT(DISTINCT vcc.organization_id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                ) AS voice_org_only_id_count,
+                COUNT(DISTINCT vcc.id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NULL
+                ) AS voice_blank_config_count,
+                MIN(vcc.golf_course_id) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                ) AS voice_golf_course_id,
+                MIN(btrim(g2.golf_course_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                      AND btrim(COALESCE(g2.golf_course_name, '')) <> ''
+                ) AS voice_golf_course_name,
+                MIN(btrim(vcc.course_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                      AND btrim(COALESCE(vcc.course_name, '')) <> ''
+                ) AS voice_config_course_name,
+                MIN(vcc.organization_id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                ) AS voice_organization_id,
+                MIN(btrim(o2.org_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                      AND btrim(COALESCE(o2.org_name, '')) <> ''
+                ) AS voice_organization_name,
+                MIN(btrim(vcc.course_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                      AND btrim(COALESCE(vcc.course_name, '')) <> ''
+                ) AS voice_config_org_name
+            FROM public.voice_numbers AS vn
+            JOIN public.voice_channel_configurations AS vcc
+              ON vcc.id = vn.voice_channel_config_id
+            LEFT JOIN public.golf_courses AS g2 ON g2.id = vcc.golf_course_id
+            LEFT JOIN public.organizations AS o2 ON o2.id = vcc.organization_id
+            WHERE regexp_replace(vn.phone_number, '\\D', '', 'g')
+                = regexp_replace(c.vapi_golf_course_phone_no, '\\D', '', 'g')
+              AND regexp_replace(COALESCE(c.vapi_golf_course_phone_no, ''), '\\D', '', 'g') <> ''
+        ) AS voice ON true
         WHERE """ + " AND ".join(where) + """
         ORDER BY c.created_at DESC
     """
@@ -260,10 +377,64 @@ def fetch_coursewise_conversations(
                 "config_level": row["config_level"],
                 "golf_course_name": row["golf_course_name"],
                 "organization_name": row["organization_name"],
+                "organization_type": row["organization_type"],
                 "booking_record_status": row["booking_record_status"],
+                "voice_golf_config_count": row["voice_golf_config_count"],
+                "voice_golf_id_count": row["voice_golf_id_count"],
+                "voice_org_only_config_count": row["voice_org_only_config_count"],
+                "voice_org_only_id_count": row["voice_org_only_id_count"],
+                "voice_blank_config_count": row["voice_blank_config_count"],
+                "voice_golf_course_id": row["voice_golf_course_id"],
+                "voice_golf_course_name": row["voice_golf_course_name"],
+                "voice_config_course_name": row["voice_config_course_name"],
+                "voice_organization_id": row["voice_organization_id"],
+                "voice_organization_name": row["voice_organization_name"],
+                "voice_config_org_name": row["voice_config_org_name"],
             }
         )
     return conversations
+
+
+def _fetch_names(connection: psycopg.Connection, sql: str) -> list[str]:
+    assert_select_only(sql)
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        return [row[0] for row in cursor.fetchall()]
+
+
+def fetch_golf_course_names(connection: psycopg.Connection) -> list[str]:
+    """Official SCO course names from golf_courses."""
+    return _fetch_names(
+        connection,
+        """
+        SELECT btrim(golf_course_name) AS name
+        FROM public.golf_courses
+        WHERE golf_course_name IS NOT NULL
+          AND btrim(golf_course_name) <> ''
+        ORDER BY length(btrim(golf_course_name)) DESC, name
+        """,
+    )
+
+
+def fetch_organization_names(connection: psycopg.Connection) -> list[str]:
+    """Official MCO names from organizations."""
+    return _fetch_names(
+        connection,
+        """
+        SELECT btrim(org_name) AS name
+        FROM public.organizations
+        WHERE org_name IS NOT NULL
+          AND btrim(org_name) <> ''
+        ORDER BY length(btrim(org_name)) DESC, name
+        """,
+    )
+
+
+def fetch_official_names(connection: psycopg.Connection) -> list[str]:
+    """Official course and organization names. Used only to normalize a V1 welcome."""
+    golf_names = fetch_golf_course_names(connection)
+    org_names = fetch_organization_names(connection)
+    return sorted(set(golf_names + org_names), key=lambda name: (-len(name), name))
 
 
 def _parse_messages(value):
@@ -579,6 +750,203 @@ def _count_courses_by_voice_numbers(
         cursor.execute(sql, (voice_line, voice_course_id, course_ids, on_date.isoformat()))
         rows = cursor.fetchall()
     return {int(row["golf_course_id"]): int(row["conversation_count"]) for row in rows}
+
+
+_VOICE_LATERAL = """
+        LEFT JOIN LATERAL (
+            SELECT
+                COUNT(DISTINCT vcc.id) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                ) AS voice_golf_config_count,
+                COUNT(DISTINCT vcc.golf_course_id) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                ) AS voice_golf_id_count,
+                COUNT(DISTINCT vcc.id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                ) AS voice_org_only_config_count,
+                COUNT(DISTINCT vcc.organization_id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                ) AS voice_org_only_id_count,
+                COUNT(DISTINCT vcc.id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NULL
+                ) AS voice_blank_config_count,
+                MIN(vcc.golf_course_id) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                ) AS voice_golf_course_id,
+                MIN(btrim(g2.golf_course_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                      AND btrim(COALESCE(g2.golf_course_name, '')) <> ''
+                ) AS voice_golf_course_name,
+                MIN(btrim(vcc.course_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NOT NULL
+                      AND btrim(COALESCE(vcc.course_name, '')) <> ''
+                ) AS voice_config_course_name,
+                MIN(vcc.organization_id) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                ) AS voice_organization_id,
+                MIN(btrim(o2.org_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                      AND btrim(COALESCE(o2.org_name, '')) <> ''
+                ) AS voice_organization_name,
+                MIN(btrim(vcc.course_name)) FILTER (
+                    WHERE vcc.golf_course_id IS NULL
+                      AND vcc.organization_id IS NOT NULL
+                      AND btrim(COALESCE(vcc.course_name, '')) <> ''
+                ) AS voice_config_org_name
+            FROM public.voice_numbers AS vn
+            JOIN public.voice_channel_configurations AS vcc
+              ON vcc.id = vn.voice_channel_config_id
+            LEFT JOIN public.golf_courses AS g2 ON g2.id = vcc.golf_course_id
+            LEFT JOIN public.organizations AS o2 ON o2.id = vcc.organization_id
+            WHERE regexp_replace(vn.phone_number, '\\D', '', 'g')
+                = regexp_replace(c.vapi_golf_course_phone_no, '\\D', '', 'g')
+              AND regexp_replace(COALESCE(c.vapi_golf_course_phone_no, ''), '\\D', '', 'g') <> ''
+        ) AS voice ON true
+"""
+
+
+def _history_assignment_sql() -> str:
+    """One row per call with the SCO or MCO id the report would use."""
+    return """
+        SELECT
+            (c.created_at AT TIME ZONE %s)::date AS call_day,
+            CASE
+                WHEN c.golf_course_id IS NOT NULL THEN c.golf_course_id
+                WHEN c.organization_id IS NULL
+                 AND voice.voice_blank_config_count = 0
+                 AND voice.voice_org_only_config_count = 0
+                 AND voice.voice_golf_id_count = 1
+                 AND voice.voice_golf_config_count >= 1
+                 AND (
+                    btrim(COALESCE(voice.voice_config_course_name, '')) <> ''
+                    OR btrim(COALESCE(voice.voice_golf_course_name, '')) <> ''
+                 )
+                THEN voice.voice_golf_course_id
+            END AS sco_id,
+            CASE
+                WHEN c.golf_course_id IS NULL AND c.organization_id IS NOT NULL
+                THEN c.organization_id
+                WHEN c.golf_course_id IS NULL
+                 AND c.organization_id IS NULL
+                 AND voice.voice_blank_config_count = 0
+                 AND voice.voice_golf_id_count = 0
+                 AND voice.voice_golf_config_count = 0
+                 AND voice.voice_org_only_id_count = 1
+                 AND voice.voice_org_only_config_count >= 1
+                 AND (
+                    btrim(COALESCE(voice.voice_config_org_name, '')) <> ''
+                    OR btrim(COALESCE(voice.voice_organization_name, '')) <> ''
+                 )
+                THEN voice.voice_organization_id
+            END AS mco_id
+        FROM public.conversations AS c
+""" + _VOICE_LATERAL
+
+
+def fetch_first_report_day(
+    connection: psycopg.Connection,
+    *,
+    timezone_name: str,
+    through: date,
+) -> date | None:
+    """Earliest Eastern calendar day that still falls on or before through."""
+    sql = """
+        SELECT MIN((c.created_at AT TIME ZONE %s)::date) AS first_day
+        FROM public.conversations AS c
+        WHERE (c.created_at AT TIME ZONE %s)::date <= %s
+    """
+    assert_select_only(sql)
+    with connection.cursor(row_factory=dict_row) as cursor:
+        cursor.execute(sql, (timezone_name, timezone_name, through))
+        row = cursor.fetchone()
+    value = row["first_day"] if row else None
+    return value
+
+
+def fetch_daily_conversation_counts(
+    connection: psycopg.Connection,
+    *,
+    timezone_name: str,
+    first_day: date,
+    through: date,
+) -> dict[date, int]:
+    """Conversation counts for each Eastern day in the history window."""
+    sql = """
+        SELECT
+            (c.created_at AT TIME ZONE %s)::date AS call_day,
+            COUNT(*) AS call_count
+        FROM public.conversations AS c
+        WHERE (c.created_at AT TIME ZONE %s)::date >= %s
+          AND (c.created_at AT TIME ZONE %s)::date <= %s
+        GROUP BY 1
+        ORDER BY 1
+    """
+    assert_select_only(sql)
+    with connection.cursor(row_factory=dict_row) as cursor:
+        cursor.execute(sql, (timezone_name, timezone_name, first_day, timezone_name, through))
+        rows = cursor.fetchall()
+    return {row["call_day"]: int(row["call_count"]) for row in rows}
+
+
+def fetch_sco_history(
+    connection: psycopg.Connection,
+    *,
+    timezone_name: str,
+    through: date,
+) -> list[dict]:
+    """First call day and call count for each Golf Course ID through the end day."""
+    sql = """
+        SELECT
+            assigned.sco_id AS golf_course_id,
+            COALESCE(btrim(g.golf_course_name), '') AS name,
+            MIN(assigned.call_day) AS first_day,
+            COUNT(*) AS call_count
+        FROM (
+    """ + _history_assignment_sql() + """
+        ) AS assigned
+        LEFT JOIN public.golf_courses AS g ON g.id = assigned.sco_id
+        WHERE assigned.sco_id IS NOT NULL
+          AND assigned.call_day <= %s
+        GROUP BY assigned.sco_id, COALESCE(btrim(g.golf_course_name), '')
+        ORDER BY name, assigned.sco_id
+    """
+    assert_select_only(sql)
+    with connection.cursor(row_factory=dict_row) as cursor:
+        cursor.execute(sql, (timezone_name, through))
+        return list(cursor.fetchall())
+
+
+def fetch_mco_history(
+    connection: psycopg.Connection,
+    *,
+    timezone_name: str,
+    through: date,
+) -> list[dict]:
+    """First call day and call count for each organization through the end day."""
+    sql = """
+        SELECT
+            assigned.mco_id AS organization_id,
+            COALESCE(btrim(o.org_name), '') AS name,
+            MIN(assigned.call_day) AS first_day,
+            COUNT(*) AS call_count
+        FROM (
+    """ + _history_assignment_sql() + """
+        ) AS assigned
+        LEFT JOIN public.organizations AS o ON o.id = assigned.mco_id
+        WHERE assigned.mco_id IS NOT NULL
+          AND assigned.call_day <= %s
+        GROUP BY assigned.mco_id, COALESCE(btrim(o.org_name), '')
+        ORDER BY name, assigned.mco_id
+    """
+    assert_select_only(sql)
+    with connection.cursor(row_factory=dict_row) as cursor:
+        cursor.execute(sql, (timezone_name, through))
+        return list(cursor.fetchall())
 
 
 def _count_conversations_for_phone(

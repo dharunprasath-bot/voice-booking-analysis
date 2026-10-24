@@ -154,13 +154,15 @@ def _call_word(count: int) -> str:
 
 def build_coursewise_report(analyses: list[dict], *, report_date: str) -> str:
     """One report per course: totals, then each failure reason with its calls."""
-    grouped: dict[str, list[dict]] = {}
+    grouped: dict[tuple[str, str], list[dict]] = {}
     for item in analyses:
         name = item.get("course_name") or UNKNOWN_COURSE
-        grouped.setdefault(name, []).append(item)
+        kind = item.get("course_kind") if item.get("course_kind") in ("SCO", "MCO", "V1") else ""
+        grouped.setdefault((kind, name), []).append(item)
 
-    def sort_key(name: str) -> tuple:
-        return (name == UNKNOWN_COURSE, -len(grouped[name]), name.lower())
+    def sort_key(key: tuple[str, str]) -> tuple:
+        kind, name = key
+        return (name == UNKNOWN_COURSE, kind, -len(grouped[key]), name.lower())
 
     day_counts = Counter(
         canonical_failure_reason(item.get("failure_reason"))
@@ -178,8 +180,8 @@ def build_coursewise_report(analyses: list[dict], *, report_date: str) -> str:
     for reason in FAILURE_REASONS:
         lines.append(f"{reason}: {day_counts.get(reason, 0)}")
     lines.append("")
-    for course_name in sorted(grouped, key=sort_key):
-        calls = grouped[course_name]
+    for kind, course_name in sorted(grouped, key=sort_key):
+        calls = grouped[(kind, course_name)]
         successful = sum(1 for item in calls if item.get("booking_status") == "Booking Successful")
         unclear = sum(1 for item in calls if item.get("booking_status") == "Unclear")
         not_completed = [
@@ -194,6 +196,7 @@ def build_coursewise_report(analyses: list[dict], *, report_date: str) -> str:
         lines.extend(
             [
                 f"Course: {course_name}",
+                *([f"Category: {kind}"] if kind else []),
                 "",
                 f"Total Calls: {len(calls)}",
                 f"Successful Bookings: {successful}",

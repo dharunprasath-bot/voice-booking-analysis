@@ -1,0 +1,71 @@
+COURSE-WISE BOOKING ANALYSIS
+
+Date: 2024-11-23
+
+FAILURE REASONS
+
+Tee Time Unavailable: 1
+Customer Rejected Alternative Time: 0
+Date/Time Issue: 0
+Player Count Issue: 0
+AI Misunderstanding: 0
+Voice Recognition Issue: 0
+Call Disconnected: 0
+Technical/API Issue: 0
+Payment Issue: 0
+Transfer Issue: 0
+Customer Changed Mind: 0
+Customer Abandoned: 5
+Information Only: 0
+Other: 1
+Unclear: 2
+
+Course: Highland Creek
+Category: SCO
+
+Total Calls: 15
+Successful Bookings: 3
+Booking Not Completed: 9
+Unclear Calls: 3
+Conversion: 20.0%
+
+Why bookings were not completed:
+
+1. Tee Time Unavailable – 1
+   - Call ID: 6005c882-4a3b-435e-bc75-8734a5f8a056
+     What happened: The golfer asked to play today, first mentioned 9 AM, then clarified to 10 AM for 1 regular player. The AI checked availability and said there were no available tee times at 10 AM today, then offered 1:00 PM as an alternative. The call ended before the golfer accepted the alternative or any booking details, price, payment, or confirmation could be completed.
+     Why not completed: The requested 10 AM tee time was unavailable and the golfer did not complete a booking for the offered 1:00 PM alternative.
+
+2. Customer Abandoned – 5
+   - Call ID: 3a5c4691-60f3-41d5-87a2-df9ae47cda59
+     What happened: The golfer confirmed they wanted to book a tee time, but when asked when they would like to play, they did not provide a date or time and instead said, 'Wonderful. Hold on.' The assistant waited, but the call ended before any tee time details, player count, holes, player type, availability, alternatives, price, payment, or confirmation could be discussed.
+     Why not completed: The booking was not completed because the customer stopped responding before giving the requested date and time.
+   - Call ID: ab1e2d10-1b13-43c9-91b3-7c97a52cf45d
+     What happened: The golfer requested November 30th at 11:00 for 8 players. The system explained it could only book a maximum of 4 players per tee time, and the golfer agreed to split the group into 2 tee times for 4 players each. The system then confirmed there were 2 tee times available at 11:00 AM for 4 regular players each and quoted a total price of $300 ($75 each), then asked whether to go ahead and book. The call ended before the golfer gave a booking confirmation or any payment/details were completed.
+     Why not completed: The golfer ended the call before confirming the quoted tee times and price, so the booking was not completed.
+   - Call ID: ece96f95-1b48-405e-8ccb-e44202b54eae
+     What happened: The golfer asked for a tee time today, said they wanted the next available option for 1 golfer, and the system found an opening at 1:00 PM for 1 player. The transcript ends right after that offer, with no acceptance, no price discussion, no payment details, and no booking confirmation before the customer ended the call.
+     Why not completed: The booking was not completed because the customer ended the call after being offered the next available tee time and before confirming it.
+   - Call ID: 014427de-1470-4077-b13b-29ba88fabe3c
+     What happened: The caller was told they already had a tee time on hold for Tuesday at 1:20 PM for 4 players at Highland Creek Golf Club, and that they needed to check their text messages and follow the instructions to confirm their payment method before the reservation would be confirmed. No booking was completed in the call, and the customer ended the call without confirming the tee time.
+     Why not completed: The customer ended the call before completing the text-message payment confirmation needed to finalize the reservation.
+   - Call ID: a02118e6-bcc6-46f0-8e97-890a9a610daa
+     What happened: The golfer asked for a tee time for 3 players on Saturday the 23rd at 2 PM. The AI first clarified the date, then checked availability and said there was no 2 PM tee time, but offered 2:20 PM or 2:30 PM for 3 players. The golfer chose 2:20 PM, and the AI said the tee time was on hold for $225 including taxes, fees, and a cart, and that a text link would be sent to confirm the booking. However, the golfer did not complete the text-link confirmation and the call ended after the golfer said 'Thank you' and then 'Hello?'
+     Why not completed: The booking was not completed because the golfer did not finish the required confirmation step after the tee time was placed on hold.
+
+3. Other – 1
+   - Call ID: adc647fa-78aa-442c-ad16-fdab69fa515c
+     What happened: The golfer asked for next Thursday afternoon around 2 PM for 3 players, all regulars, and the system first found no availability for that request. The golfer rejected a waitlist and then tried Thursday later, Wednesday at 11 AM, and finally accepted Wednesday at 12:30 PM. The tee time was confirmed at 12:30 PM for 3 players with a total fee of $156 including fees, taxes, and cart, and the bot said the booking was all set.
+     Why not completed: The booking was cancelled.
+
+4. Unclear – 2
+   - Call ID: ebf78df2-06e5-4ddd-9434-734fed3d2f7e
+     What happened: The golfer asked for a tee time around 2:15 and confirmed it was for today with 3 players, all regular players, and no seniors. The AI repeated the request and said it would check availability, but the call ended in silence before any tee time options, pricing, payment, or booking confirmation were provided.
+     Why not completed: The call ended before availability, price, payment, or confirmation details were completed.
+   - Call ID: 0f7d6a08-8d86-4588-a8c9-0a97aca38b8c
+     What happened: The AI asked when the golfer would like to play, but the golfer responded with an unclear word, "Narnhold," and the conversation ended immediately after the AI began to repeat it. No valid date, time, player count, holes, player type, availability, alternatives, price, payment, or confirmation details were established.
+     Why not completed: The booking was not completed because the golfer's response was unclear and no usable tee time request could be confirmed before the call ended.
+
+Repeated Issues:
+- Customer Abandoned – 5 calls
+- Unclear – 2 calls

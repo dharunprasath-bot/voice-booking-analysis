@@ -53,6 +53,7 @@ function parseCourse(date, block) {
     notCompleted: Number(field(block, "Booking Not Completed")) || 0,
     unclear: Number(field(block, "Unclear Calls")) || 0,
     conversion: field(block, "Conversion"),
+    kind: ["SCO", "MCO", "V1"].includes(field(block, "Category")) ? field(block, "Category") : "",
     reasons,
   }
 }

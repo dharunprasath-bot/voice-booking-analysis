@@ -1,0 +1,70 @@
+COURSE-WISE BOOKING ANALYSIS
+
+Date: 2025-02-24
+
+FAILURE REASONS
+
+Tee Time Unavailable: 1
+Customer Rejected Alternative Time: 1
+Date/Time Issue: 0
+Player Count Issue: 0
+AI Misunderstanding: 0
+Voice Recognition Issue: 0
+Call Disconnected: 0
+Technical/API Issue: 0
+Payment Issue: 0
+Transfer Issue: 2
+Customer Changed Mind: 1
+Customer Abandoned: 3
+Information Only: 0
+Other: 0
+Unclear: 0
+
+Course: Highland Creek
+Category: SCO
+
+Total Calls: 21
+Successful Bookings: 12
+Booking Not Completed: 8
+Unclear Calls: 1
+Conversion: 57.1%
+
+Why bookings were not completed:
+
+1. Tee Time Unavailable – 1
+   - Call ID: d8317f8d-b6db-4bdf-be13-8b48779d9d02
+     What happened: The golfer asked for Wednesday morning, earliest possible, for 1 player. The system checked availability and said there were no available tee times for a single player in the morning because single players can only book onto an existing tee time. It offered alternatives: try a different time or date, or join the waitlist. The golfer agreed to the waitlist, then chose Wednesday afternoon anytime, and the system added him to the wait list for around 3 PM with a text notification note. No actual tee time booking was available or completed.
+     Why not completed: No bookable tee time was available for the requested Wednesday morning single-player round, so the conversation ended with a waitlist instead of a confirmed booking.
+
+2. Customer Rejected Alternative Time – 1
+   - Call ID: e4e9b774-84de-4c04-a847-1a0218e9ca88
+     What happened: The golfer asked for Saturday for 4 players at 10 AM, and the AI checked availability and found 10 AM unavailable. The AI offered 11 AM and 11:30 AM, but the golfer asked for 11:20 instead. The AI then placed 11:20 AM on hold for Saturday, March 1 for 4 players and quoted a total of $322.32 including cart fees, with a text link to confirm. However, the transcript does not show the golfer completing the final confirmation step, and the call ended after the golfer said 'No.'
+     Why not completed: The booking was not completed because the golfer did not finish confirming the held tee time after the alternative time and price were provided.
+
+3. Transfer Issue – 2
+   - Call ID: 76c59781-7383-4c51-a2f7-4bd3fe8576aa
+     What happened: The golfer asked for Monday, March 3 at 3:30 PM for 4 players and the assistant checked availability, saying that tee time was available. Before any booking details, price, payment, or confirmation could be completed, the golfer said they wanted to speak to a person and said the information was wrong, so the assistant forwarded the call to the pro shop instead of finishing the reservation.
+     Why not completed: The booking was not completed because the golfer requested a transfer to a person before the reservation could be finalized.
+   - Call ID: 05b44247-f8ba-4e0b-bc5e-9f17b5860c32
+     What happened: The golfer requested tomorrow at 1:30 PM for 3 players and the system found availability, quoted $156 total ($52 each) with alternatives at 1:20 PM and 1:40 PM. The booking stopped when the golfer said they wanted to play 9 holes instead of 18, and the assistant said it could only book 18-hole tee times and offered a transfer to the pro shop. The golfer agreed to the transfer, and the call was forwarded instead of being booked.
+     Why not completed: The booking was not completed because the request was for 9 holes, which the system could not book, so the call was transferred to the pro shop instead.
+
+4. Customer Changed Mind – 1
+   - Call ID: f41a6352-1406-45ed-92cf-82af4335cbd4
+     What happened: The golfer asked for tomorrow at 10:30 AM for 3 players. The system found that 10:30 AM was unavailable and offered 10:10 AM or 10:00 AM instead. The golfer accepted 10:00 AM, and the tee time was placed on hold with a quoted total of $156 including cart fees and a text link to confirm. Before the booking was finalized, the golfer said to cancel the tee time, and the call ended with the reservation still only on hold and not paid/confirmed.
+     Why not completed: The golfer changed their mind and asked to cancel before the on-hold tee time was fully confirmed.
+
+5. Customer Abandoned – 3
+   - Call ID: b7269ddb-5f34-4ac3-8d77-5aafcd610929
+     What happened: The golfer asked for a tee time on Saturday, then specified Saturday morning for 4 players and confirmed there were no seniors in the group. The assistant said it would check availability and return with options, but the call ended in silence before any tee times, prices, alternatives, payment details, or booking confirmation were provided.
+     Why not completed: The booking was not completed because the call timed out after the assistant began checking availability and no further response was received.
+   - Call ID: a4d7af99-1e45-4724-8ad8-c7924d216e60
+     What happened: The golfer asked for Wednesday at 9:00 AM for 2 players and mentioned a veteran/senior in the group. The 9:00 AM time was unavailable, so the AI offered 8:50 AM or 9:10 AM. The golfer chose 9:10 AM, and the AI quoted a total fee of $94 including cart fees and said a text link would be sent to confirm the booking. However, the transcript ends with the golfer saying 'No' to anything else and hanging up before any text-link confirmation or completed booking is shown.
+     Why not completed: The booking was not completed because the golfer ended the call before confirming the hold through the text link.
+   - Call ID: a7c9288f-c136-44d6-83ec-adbf170956c9
+     What happened: The golfer asked for Wednesday, February 26 at 9:00 AM for 2 players. The system said 9:00 AM was unavailable and offered 8:50 AM or 9:10 AM instead. The golfer chose 9:10 AM, and the system placed the tee time on hold for $104 including cart fees and said a text would be sent to enter an email and confirm the booking. The call then ended before the customer completed that confirmation step.
+     Why not completed: The booking was not completed because the golfer ended the call before finishing the text/email confirmation step.
+
+Repeated Issues:
+- Transfer Issue – 2 calls
+- Customer Abandoned – 3 calls

@@ -124,7 +124,7 @@ function ConversionBars({ courses }) {
         {courses.map((course) => {
           const width = Math.min(Math.max(course.conversionNumber, 0), 100)
           return (
-            <li key={`${course.date}|${course.name}`} data-course={course.name} data-conversion={course.conversionLabel}>
+            <li key={`${course.date}|${course.kind || ""}|${course.name}`} data-course={course.name} data-kind={course.kind || undefined} data-conversion={course.conversionLabel}>
               <span className="bar-label">
                 {course.name}
                 {course.showDate ? <span className="date-tag">{course.date}</span> : null}

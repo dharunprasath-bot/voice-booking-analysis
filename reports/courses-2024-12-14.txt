@@ -1,0 +1,53 @@
+COURSE-WISE BOOKING ANALYSIS
+
+Date: 2024-12-14
+
+FAILURE REASONS
+
+Tee Time Unavailable: 0
+Customer Rejected Alternative Time: 0
+Date/Time Issue: 0
+Player Count Issue: 2
+AI Misunderstanding: 0
+Voice Recognition Issue: 0
+Call Disconnected: 0
+Technical/API Issue: 0
+Payment Issue: 0
+Transfer Issue: 1
+Customer Changed Mind: 0
+Customer Abandoned: 0
+Information Only: 1
+Other: 0
+Unclear: 0
+
+Course: Highland Creek
+Category: SCO
+
+Total Calls: 16
+Successful Bookings: 8
+Booking Not Completed: 4
+Unclear Calls: 4
+Conversion: 50.0%
+
+Why bookings were not completed:
+
+1. Player Count Issue – 2
+   - Call ID: f7fa1e3f-452e-4b91-b05b-0e52f07a1e50
+     What happened: The golfer asked for tomorrow afternoon around 1 PM for 4 players and specified 9 holes. The AI explained that it could only book 18-hole tee times and offered to check availability for 18 holes for the same group of 4. The golfer declined that alternative and ended the conversation, so no booking was made.
+     Why not completed: The booking was not completed because the requested 9-hole round for 4 players could not be booked and the golfer rejected the 18-hole alternative.
+   - Call ID: d34d56d4-25d5-46b8-96ba-190a06fc4358
+     What happened: The golfer asked for a tee time today at 1:00 for 9 holes. The assistant said it could only help with 18-hole bookings and offered to switch the request to an 18-hole tee time at 1:00 today. The golfer did not respond further, so no availability check, price, payment, or confirmation details were completed.
+     Why not completed: The booking was not completed because the requested 9-hole round was not supported and the golfer did not continue with the 18-hole alternative.
+
+2. Transfer Issue – 1
+   - Call ID: 7a8eaeaf-ef6d-45e5-a4c1-94a7b9af9819
+     What happened: The golfer asked to cancel an existing tee time for today at 11 AM for 4 players. The system checked the booking and said it was inside the cancellation window, so it could not cancel it and instructed the golfer to contact the pro shop directly. No new booking was made and no cancellation was completed in the call.
+     Why not completed: The booking was not completed because the system could not process the cancellation and directed the golfer to the pro shop instead.
+
+3. Information Only – 1
+   - Call ID: d9c4a293-65ef-4270-b228-f2f8cec3d36b
+     What happened: The caller asked only whether there was a frost delay this morning. The AI checked and said it could not find specific frost-delay information, advised checking with the pro shop, and offered to transfer the caller. No tee time request, availability search, price discussion, payment, or booking confirmation occurred.
+     Why not completed: The call did not proceed to a booking because the caller only requested course-condition information and did not ask to book a tee time.
+
+Repeated Issues:
+- Player Count Issue – 2 calls

@@ -1,0 +1,134 @@
+COURSE-WISE BOOKING ANALYSIS
+
+Date: 2025-03-12
+
+FAILURE REASONS
+
+Tee Time Unavailable: 3
+Customer Rejected Alternative Time: 4
+Date/Time Issue: 1
+Player Count Issue: 1
+AI Misunderstanding: 0
+Voice Recognition Issue: 0
+Call Disconnected: 1
+Technical/API Issue: 0
+Payment Issue: 1
+Transfer Issue: 5
+Customer Changed Mind: 3
+Customer Abandoned: 5
+Information Only: 0
+Other: 0
+Unclear: 1
+
+Course: Highland Creek
+Category: SCO
+
+Total Calls: 43
+Successful Bookings: 13
+Booking Not Completed: 25
+Unclear Calls: 5
+Conversion: 30.2%
+
+Why bookings were not completed:
+
+1. Tee Time Unavailable – 3
+   - Call ID: 501d21f5-a5b9-4a63-94f7-f391fc748ed1
+     What happened: The golfer asked to play on March 15 and first gave 10:30 AM, then corrected to 7:30 AM. The AI confirmed March 15 at 7:30 AM for 4 regular players and checked availability. The golfer did not receive a completed booking because the requested 7:30 AM tee time was unavailable, and the AI only offered later alternatives at 1:40 PM and 1:50 PM for 4 players before the call ended.
+     Why not completed: The requested 7:30 AM tee time was unavailable, so the booking could not be completed.
+   - Call ID: 799dbf5a-834b-4aac-af19-952ac190c5e8
+     What happened: The golfer asked for Saturday at 10:00 with 4 players. The assistant checked availability and said that 10:00 was not available, then offered two alternatives: 1:40 PM and 1:50 PM for 4 players. The call ended before the golfer chose one of the offered times or any booking details could be confirmed.
+     Why not completed: The requested tee time was unavailable and the golfer did not accept one of the alternative times before the call ended.
+   - Call ID: 1b97e29a-124c-42dc-aee5-040c8ee81b18
+     What happened: The golfer wanted to cancel an existing hold and book a different tee time for today for 2 players. The AI first offered 3:30 PM for 2 players at $111.16 total, but after the golfer agreed, that time was no longer available. The AI then offered alternatives at 3:20 PM and 2:40 PM with the same pricing, and the golfer chose 3:20 PM, but that option also ran into a snag before the booking could be completed. No confirmed reservation was issued.
+     Why not completed: The selected tee time became unavailable during booking, and the alternative option also failed before confirmation.
+
+2. Customer Rejected Alternative Time – 4
+   - Call ID: ac1a6ec0-306d-429f-ab33-f860d7e095e3
+     What happened: The golfer requested tomorrow at 8:30 AM for 1 player. The assistant checked availability and said 8:30 AM was unavailable, then offered 8:40 AM for 1 player. The golfer declined that alternative and asked for the pro shop instead, so the call was forwarded rather than booked.
+     Why not completed: The booking was not completed because the golfer rejected the only alternative tee time offered and chose to be transferred to the pro shop.
+   - Call ID: d8820efb-87ee-4268-b950-d5f2db55ede6
+     What happened: The golfer asked for a tee time around 2:20 PM and the assistant clarified it as 2:20 PM today for 1 player. After checking availability, the assistant said 2:20 PM was unavailable and offered two alternatives: 1:50 PM or 3:30 PM today. The golfer did not choose either option and instead asked to speak to a representative, so the call was forwarded to the pro shop without a booking being completed.
+     Why not completed: The booking was not completed because the golfer rejected the offered alternative tee times and requested a transfer instead.
+   - Call ID: 6bd84a64-5fa8-4b2f-8e06-b26edef37842
+     What happened: The golfer asked for a tee time around 4:00 PM for March 12 for 1 regular player. The system checked availability and said 4:00 PM was unavailable, then offered 3:30 PM or 2:40 PM. After the golfer questioned the times and the system clarified that 2:40 PM was in the past, only 3:30 PM remained. The golfer declined that alternative and ended the call before any booking details, payment, or confirmation could be completed.
+     Why not completed: The booking was not completed because the golfer rejected the only remaining available tee time.
+   - Call ID: c47085a1-b5f3-456a-8ab4-7b40a4921cd9
+     What happened: The golfer asked for tomorrow at 9:00 AM for 3 players and then asked whether the booking could be for 9 holes. The assistant said it could only book 18-hole rounds, then checked availability and said 9:00 AM was unavailable but offered 8:20 AM or 8:30 AM for 3 players, or a waitlist for 9:00 AM. The golfer then said 'Correct. Pro shop,' and the assistant forwarded the call to the pro shop instead of completing a tee time booking.
+     Why not completed: The booking was not completed because the golfer did not accept the offered alternative tee times and the call was transferred to the pro shop.
+
+3. Date/Time Issue – 1
+   - Call ID: bbeafce1-8c38-4696-960e-5957d3a10f44
+     What happened: The golfer asked for April fourth at 9:30 for 12 players. The AI clarified that the course can only book a maximum of 4 players per tee time, and the golfer then split it into 3 groups of 4. When the AI checked availability, it found April fourth was more than 14 days out and the course only books up to 14 days in advance, so no tee time could be booked.
+     Why not completed: The booking could not be completed because the requested date was outside the course's 14-day booking window.
+
+4. Player Count Issue – 1
+   - Call ID: 6a5c9469-7c5c-4bda-b608-1c7102885c1a
+     What happened: The golfer asked to play tomorrow/Thursday, March 13th at 12:30 for 2 players and specified 9 holes. The AI said it could only book 18-hole tee times and offered to check 18 holes at 12:30 for 2 players instead, but the golfer said no and the call ended without a booking or confirmation.
+     Why not completed: The booking was not completed because the requested 9-hole round could not be booked through the system and the golfer رفض the 18-hole alternative.
+
+5. Call Disconnected – 1
+   - Call ID: cb4e975b-a1cb-4e10-878d-2617e44d7c26
+     What happened: The golfer asked for a tee time today, specified 12:20 PM for 2 players, and confirmed both were seniors. The assistant repeated the details and said it would check availability, but the call ended in silence before any tee time, price, alternative, payment, or confirmation could be provided.
+     Why not completed: The call disconnected before availability was checked and no booking details or confirmation were completed.
+
+6. Payment Issue – 1
+   - Call ID: 842029ed-c54f-4354-a36e-6366cc93f1d9
+     What happened: The golfer asked for tomorrow at 1:40 PM for 4 players, and the AI found availability and quoted a total price of $222.32 ($55.58 per player) including cart fees. The AI then said the booking was on hold and that a text link would be sent to confirm the booking, but the transcript does not show the golfer completing that confirmation step or any payment being finalized before the call ended.
+     Why not completed: The booking was not completed because the confirmation/payment step was not finished in the transcript.
+
+7. Transfer Issue – 5
+   - Call ID: 5f55974b-c2f2-450e-9b55-734b02f0252c
+     What happened: The assistant greeted Andrew and asked when he would like to play, but before any date, time, player count, holes, player type, availability, pricing, payment, or confirmation details were gathered, the caller said 'Golf professional. Pro shop.' The assistant then forwarded the call to Highland Creek Golf Club instead of completing a tee time booking.
+     Why not completed: The call was transferred to the pro shop before any booking details could be collected or confirmed.
+   - Call ID: 69fc5d39-da87-4964-990b-5e796095700b
+     What happened: The assistant greeted the golfer and asked when he would like to play, but the golfer immediately asked for the pro shop instead of giving a tee time request. The assistant then forwarded the call to Highland Creek Golf Club, so no date, time, player count, holes, player type, availability, alternatives, price, payment, or confirmation details were collected.
+     Why not completed: The call was transferred to the pro shop before any tee time details could be gathered or booked.
+   - Call ID: 4afa5be3-4b1c-4bc8-b52f-7b156d97204b
+     What happened: The golfer asked for today, then clarified 2 players at 2 PM, and the assistant confirmed it as 1 player at 2 PM before checking availability. The requested 2 PM tee time was unavailable, and the assistant offered alternatives at 1:50 PM and 12:50 PM or a waitlist for 2 PM. Instead of choosing an alternative, the golfer asked to be transferred to the pro shop to speak with someone, and the call was forwarded.
+     Why not completed: The booking was not completed because the golfer requested a transfer to the pro shop instead of selecting an available alternative or continuing the booking process.
+   - Call ID: 2fb1e12f-9c39-4d33-aba6-af49ad26e781
+     What happened: The assistant asked when Travis wanted to play, but the user responded with an unrelated phrase and did not provide a date, time, player count, holes, or player type. After the assistant clarified that it needed a golf date and time, the user asked to be transferred to the pro shop, and the assistant forwarded the call instead of completing a tee time booking. No availability, alternatives, price, payment, or confirmation details were discussed.
+     Why not completed: The call was transferred to the pro shop before any tee time details or booking steps could be completed.
+   - Call ID: f8125278-600e-4a48-984b-9770907a260e
+     What happened: The assistant greeted the caller and asked when they would like to play, but the user replied 'Pro shop,' which the assistant interpreted as a request to be forwarded. The call was then transferred to Highland Creek Golf Club before any tee time details were provided, so no date, time, player count, holes, player type, availability, alternatives, price, payment, or confirmation details were collected.
+     Why not completed: The booking was not completed because the call was transferred to the pro shop before any tee time information could be gathered.
+
+8. Customer Changed Mind – 3
+   - Call ID: e19db819-d2cb-46f0-b398-2e817ea9ede9
+     What happened: The golfer asked to cancel an existing March 20 tee time rather than make a new booking. The system confirmed the existing booking details, asked for confirmation, and the golfer confirmed cancellation. The tee time was then successfully canceled, so no new booking was completed.
+     Why not completed: The golfer chose to cancel the existing reservation instead of completing a booking.
+   - Call ID: 9a6ecb44-8445-4e78-8178-3621b9ed8858
+     What happened: The AI greeted Richard and referenced an existing tee time for March 20 at 10:00 AM for 4 players, payable at the counter, then offered a similar tee time or other help. Richard declined with 'No. Thank you,' so no new booking request, availability check, price discussion, or confirmation steps occurred.
+     Why not completed: The golfer declined further assistance and did not want to proceed with a new booking.
+   - Call ID: 3ca96be0-a517-4571-8132-7efea1b9ee2b
+     What happened: The caller did not request a new tee time booking; instead, Whitney asked to cancel an existing Friday tee time for 2 players at Highland Creek Golf Club. The agent confirmed the booking details, warned there would be no refund because it was pay at counter, and the caller confirmed cancellation. The tee time was successfully canceled, so no new booking was made.
+     Why not completed: The call ended with the customer canceling an existing reservation rather than completing a new booking.
+
+9. Customer Abandoned – 5
+   - Call ID: 105aa97f-1173-4f79-88a1-608672a98c23
+     What happened: The golfer asked for a tee time at 9 o'clock on Sunday, and the AI repeated that it understood the request as Sunday, March 16th. No availability, player count, holes, player type, pricing, payment, or booking confirmation details were reached before the customer ended the call.
+     Why not completed: The customer ended the call before any tee time options, pricing, or booking confirmation could be completed.
+   - Call ID: 4cbd6620-745c-47f6-b172-aef8d589b451
+     What happened: The golfer asked for tomorrow at 1:40 PM for 4 regular players. That time was unavailable, so the AI offered 1:20 PM or 1:50 PM. The golfer chose 1:50 PM, and the AI said the tee time was on hold and that a text would be sent to enter an email and confirm the booking. The call then ended after the golfer said there was nothing else, but there is no evidence in the transcript that the golfer completed the text/email confirmation step or that the booking was finalized.
+     Why not completed: The booking was not completed because the golfer ended the call before finishing the confirmation step.
+   - Call ID: 31a96986-407d-428d-8c97-2d7fea8695e9
+     What happened: The golfer asked about a tee time and clarified the date as March 12 with a requested time of 3:20 and 3 players. The AI repeated the details and asked whether there were any seniors in the group, but no booking was completed, no rate or availability was confirmed, and the caller ended the call before any confirmation or payment steps.
+     Why not completed: The customer ended the call before the booking could be completed.
+   - Call ID: e88d626d-5466-442f-a501-57802c30c884
+     What happened: The golfer asked for a tee time today for 2 players and first requested 3:20 PM. The course had 3:20 PM available for $111.16 including a cart, with alternatives at 3:10 PM and 3:30 PM. When 3:20 PM was no longer available, the golfer chose 3:10 PM. The system then said the booking was on hold and that a text would be sent to enter an email and confirm the booking, but the call ended before any final confirmation was completed in the transcript.
+     Why not completed: The golfer did not complete the final confirmation step before ending the call.
+   - Call ID: ad56cad3-bfa6-423c-b6a7-93fb9bf15cb8
+     What happened: The golfer asked for this Friday, then clarified a preferred window of 12 PM to 3 PM for 3 players. The agent checked availability and offered a tee time at 12:00 PM for 3 players with a total price of $241.74 including a golf cart, plus alternatives at 11:50 AM and 11:40 AM. The transcript ends before the golfer accepted a time, provided payment details, or received a booking confirmation, and the call was ended by the customer.
+     Why not completed: The booking was not completed because the customer ended the call before accepting an offered tee time or finishing the reservation.
+
+10. Unclear – 1
+   - Call ID: 48fb0706-1bec-4071-ad13-aa6d96f11273
+     What happened: The golfer asked for Saturday, March 15, wanted 12 players for 18 holes, and requested the earliest morning tee time possible. The assistant repeated the request and asked a follow-up question about whether there were any seniors in the group, but the call then ended from silence before any tee time availability, price, payment, or booking confirmation was provided.
+     Why not completed: The booking was not completed because the call timed out in silence before the assistant could finish gathering details or present availability and confirm a reservation.
+
+Repeated Issues:
+- Tee Time Unavailable – 3 calls
+- Customer Rejected Alternative Time – 4 calls
+- Transfer Issue – 5 calls
+- Customer Changed Mind – 3 calls
+- Customer Abandoned – 5 calls

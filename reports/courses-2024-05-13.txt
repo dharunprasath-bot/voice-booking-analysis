@@ -1,0 +1,60 @@
+COURSE-WISE BOOKING ANALYSIS
+
+Date: 2024-05-13
+
+FAILURE REASONS
+
+Tee Time Unavailable: 0
+Customer Rejected Alternative Time: 0
+Date/Time Issue: 0
+Player Count Issue: 0
+AI Misunderstanding: 0
+Voice Recognition Issue: 0
+Call Disconnected: 0
+Technical/API Issue: 0
+Payment Issue: 6
+Transfer Issue: 0
+Customer Changed Mind: 1
+Customer Abandoned: 0
+Information Only: 0
+Other: 0
+Unclear: 0
+
+Course: Highland Creek
+Category: SCO
+
+Total Calls: 7
+Successful Bookings: 0
+Booking Not Completed: 7
+Unclear Calls: 0
+Conversion: 0.0%
+
+Why bookings were not completed:
+
+1. Payment Issue – 6
+   - Call ID: e7994b29-34a8-4ba1-a3cf-e79663f29ded
+     What happened: The golfer asked for a tee time this Wednesday for 2 players around 3:00 PM. The system found availability for 3:00 PM, quoted a total of $102.92, and the golfer said yes. The booking was not completed on the call because the golfer was told an SMS payment link would be sent to finish the reservation, but no payment was completed or confirmation number given in the transcript.
+     Why not completed: The booking was not completed because payment was deferred to an SMS link and no payment confirmation was completed during the call.
+   - Call ID: 062ab00e-29f8-490c-8c9c-023c242c29db
+     What happened: The golfer asked for a tee time this Wednesday for 2 players, first around 3:00 and then 3:30. The course offered both times, and the golfer chose 3:30 PM. The AI said the tee time was confirmed and that an SMS payment link would be sent to finish the booking, but there is no evidence in the transcript or message log that the payment was completed or that the booking was finalized.
+     Why not completed: The booking was not completed because payment was still required through the SMS link and there is no evidence that it was finished.
+   - Call ID: 67c5423e-5196-43b2-b95b-aee331078ef2
+     What happened: The golfer asked for a tee time for tomorrow, then clarified it was for 2 players and requested 10 AM. The assistant first said 10 AM tomorrow was available, then after the user asked about Wednesday and Thursday/Friday options, it eventually found a Wednesday tee time for 2 players at 9:40 AM on May 15 and asked for confirmation. After the user said yes, the assistant said the tee time was almost ready and that an SMS payment link would be sent to finish the booking, but no payment was completed in the transcript and no final booking confirmation was shown.
+     Why not completed: The booking was not completed because the process stopped at payment, with only an SMS payment link promised and no evidence that payment was finished.
+   - Call ID: 2add85cc-3c07-46f6-82b3-648fdb4056b4
+     What happened: The golfer asked for a tee time for tomorrow afternoon for 2 players, specifically for him and his dad. The assistant checked availability and offered 2:40 PM, 3:20 PM, and 4:00 PM, then the golfer chose 4:20 PM. The assistant said the tee time was almost ready and that an SMS payment link would be sent to confirm the booking, but no payment was completed and no final booking confirmation appears in the transcript.
+     Why not completed: The booking was not completed because confirmation depended on a payment link that was never completed in the conversation.
+   - Call ID: 87a92b8a-3ed7-4f70-ada5-0844d3d363d2
+     What happened: The golfer asked to cancel an existing booking and make a new tee time for tomorrow, then specified 2 players around midday. The AI found availability for 2 players at 12 PM tomorrow and the golfer accepted it. The AI said the tee time was almost ready and that an SMS payment link would be sent to confirm the booking, but no payment was completed and no final booking confirmation appears in the transcript.
+     Why not completed: The booking was not completed because payment was still required through the SMS link and was never finished in the conversation.
+   - Call ID: c79f0ffe-5749-46c3-913b-83264ab82dd5
+     What happened: The golfer asked for a Friday morning tee time for 3 people at 10:00 AM. The assistant found an available tee time at 10:20 AM on Friday for 3 players and the golfer accepted it. The assistant then said an SMS payment link would be sent to finish the booking, but there is no evidence in the transcript or message log that the payment was completed or that a final booking confirmation was issued.
+     Why not completed: The booking was not completed because payment was required via SMS link and there is no evidence that the payment step was finished.
+
+2. Customer Changed Mind – 1
+   - Call ID: 440dc58f-91d4-4537-9a5f-390d1aa49300
+     What happened: The caller was told there was already a tee time booked for Friday at 10:20 AM for 3 players, but it was not paid yet and needed payment via SMS to continue. The golfer then said, 'Please cancel my booking. I changed my mind,' and did not proceed with payment or confirmation. The later directions request was unrelated to completing the booking.
+     Why not completed: The golfer changed their mind and asked to cancel instead of continuing to payment and confirmation.
+
+Repeated Issues:
+- Payment Issue – 6 calls

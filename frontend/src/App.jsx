@@ -20,7 +20,11 @@ import {
 import { parseReport } from "./parseReport.js"
 
 function courseKey(course) {
-  return `${course.date}|${course.name}`
+  return `${course.date}|${course.kind || ""}|${course.name}`
+}
+
+function sameCourse(course, selected) {
+  return course.name === selected.name && (course.kind || "") === (selected.kind || "")
 }
 
 function DateMenu({ value, dates, disabled, onChange }) {
@@ -134,6 +138,7 @@ export default function App() {
   const [courseSearch, setCourseSearch] = useState("")
   const [reasonFilter, setReasonFilter] = useState("all")
   const [page, setPage] = useState("overview")
+  const [detailReturn, setDetailReturn] = useState("courses")
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [openReasons, setOpenReasons] = useState({})
   const [openCalls, setOpenCalls] = useState({})
@@ -215,13 +220,17 @@ export default function App() {
 
   const listedCourses = useMemo(() => {
     const matched = applyFilters(dateCourses, { courseFilter: "all", reasonFilter: "all", search: courseSearch })
-    return groupCoursesByName(matched)
+    return {
+      sco: groupCoursesByName(matched.filter((course) => course.kind === "SCO")).map((course) => ({ ...course, kind: "SCO" })),
+      mco: groupCoursesByName(matched.filter((course) => course.kind === "MCO")).map((course) => ({ ...course, kind: "MCO" })),
+      v1: groupCoursesByName(matched.filter((course) => course.kind === "V1")).map((course) => ({ ...course, kind: "V1" })),
+    }
   }, [dateCourses, courseSearch])
 
   const detailRows = useMemo(() => {
     if (!selectedCourse || !dateFilter) return []
     const allowed = new Set(activeDates)
-    return allCourses.filter((course) => course.name === selectedCourse.name && allowed.has(course.date))
+    return allCourses.filter((course) => sameCourse(course, selectedCourse) && allowed.has(course.date))
   }, [allCourses, selectedCourse, activeDates])
 
   const dailyDates = useMemo(
@@ -236,7 +245,7 @@ export default function App() {
   const courseComparisonDays = useMemo(() => {
     if (!selectedCourse) return []
     const allowed = new Set(dailyDates)
-    const rows = allCourses.filter((course) => course.name === selectedCourse.name && allowed.has(course.date))
+    const rows = allCourses.filter((course) => sameCourse(course, selectedCourse) && allowed.has(course.date))
     return compareCourseRows(rows)
   }, [allCourses, selectedCourse, dailyDates])
 
@@ -296,6 +305,7 @@ export default function App() {
     }))
     const course = {
       name: selectedCourse.name,
+      kind: selectedCourse.kind || "",
       date: rangeLabel,
       ...summary,
       conversionLabel: summary.conversion,
@@ -368,7 +378,8 @@ export default function App() {
   }
 
   function openCourse(course) {
-    setSelectedCourse({ name: course.name })
+    setSelectedCourse({ name: course.name, kind: course.kind || "" })
+    setDetailReturn(page === "v1" ? "v1" : "courses")
     setPage("detail")
     setOpenReasons({})
     setOpenCalls({})
@@ -438,9 +449,13 @@ export default function App() {
             <span className="nav-icon" aria-hidden="true">▦</span>
             <span>Dashboard</span>
           </button>
-          <button type="button" className={page === "courses" || page === "detail" ? "active" : ""} onClick={() => openPage("courses")}>
+          <button type="button" className={page === "courses" || (page === "detail" && detailReturn !== "v1") ? "active" : ""} onClick={() => openPage("courses")}>
             <span className="nav-icon" aria-hidden="true">☰</span>
             <span>Course list</span>
+          </button>
+          <button type="button" className={page === "v1" || (page === "detail" && detailReturn === "v1") ? "active" : ""} onClick={() => openPage("v1")}>
+            <span className="nav-icon" aria-hidden="true">☰</span>
+            <span>V1 Course List</span>
           </button>
           <button type="button" className={page === "comparison" ? "active" : ""} onClick={() => openPage("comparison")}>
             <span className="nav-icon" aria-hidden="true">↗</span>
@@ -463,7 +478,7 @@ export default function App() {
         <div>
           <h1>Course booking reports</h1>
           <p>
-            {page === "overview" ? "Overall dashboard" : page === "courses" ? "Course list" : page === "comparison" ? "Daily Comparison" : "Course detail"}
+            {page === "overview" ? "Overall dashboard" : page === "courses" ? "Course list" : page === "v1" ? "V1 Course List" : page === "comparison" ? "Daily Comparison" : "Course detail"}
           </p>
         </div>
         {page === "overview" ? (
@@ -528,14 +543,14 @@ export default function App() {
       </section>
       )}
 
-      {page === "courses" || page === "detail" ? (
+      {page === "courses" || page === "v1" || page === "detail" ? (
         <div className="sticky-bar">
           <button
             type="button"
             className="back"
-            onClick={() => setPage(page === "detail" ? "courses" : "overview")}
+            onClick={() => setPage(page === "detail" ? detailReturn : "overview")}
           >
-            {page === "detail" ? "Back to Course List" : "Back to Dashboard"}
+            {page === "detail" ? (detailReturn === "v1" ? "Back to V1 Course List" : "Back to Course List") : "Back to Dashboard"}
           </button>
           <p className="sticky-date">{rangeLabel}</p>
           {page === "detail" ? (
@@ -576,7 +591,17 @@ export default function App() {
 
       {ready && page === "courses" ? (
         <CourseList
-          courses={listedCourses}
+          scoCourses={listedCourses.sco}
+          mcoCourses={listedCourses.mco}
+          search={courseSearch}
+          onSearch={setCourseSearch}
+          onOpenCourse={openCourse}
+        />
+      ) : null}
+
+      {ready && page === "v1" ? (
+        <V1CourseList
+          courses={listedCourses.v1}
           search={courseSearch}
           onSearch={setCourseSearch}
           onOpenCourse={openCourse}
@@ -812,11 +837,34 @@ function CourseDailyComparison({ courseName, days, from, to, earliestDate, lates
   )
 }
 
-function CourseList({ courses, search, onSearch, onOpenCourse }) {
+function CourseRows({ courses, onOpenCourse }) {
+  if (courses.length === 0) return <p className="empty">No matching records found.</p>
+  return courses.map((course) => (
+    <button
+      type="button"
+      className="course-row"
+      key={course.name}
+      data-course={course.name}
+      data-kind={course.kind || undefined}
+      onClick={() => onOpenCourse(course)}
+    >
+      <span className="course-row-name">
+        <strong>{course.name}</strong>
+      </span>
+      <Metric label="Total Calls" value={course.totalCalls} />
+      <Metric label="Successful Bookings" value={course.successful} />
+      <Metric label="Booking Not Completed" value={course.notCompleted} />
+      <Metric label="Unclear Calls" value={course.unclear} />
+      <Metric label="Conversion" value={course.conversionLabel} />
+    </button>
+  ))
+}
+
+function V1CourseList({ courses, search, onSearch, onOpenCourse }) {
   return (
-    <section className="course-list" aria-label="Courses" data-count={courses.length}>
+    <section className="course-list" aria-label="V1 Course List" data-count={courses.length}>
       <div className="list-tools">
-        <h2>Courses {courses.length}</h2>
+        <h2>V1 Course List {courses.length}</h2>
         <label>
           Search courses
           <input
@@ -827,25 +875,37 @@ function CourseList({ courses, search, onSearch, onOpenCourse }) {
           />
         </label>
       </div>
-      {courses.length === 0 ? <p className="empty">No matching records found.</p> : null}
-      {courses.map((course) => (
-        <button
-          type="button"
-          className="course-row"
-          key={course.name}
-          data-course={course.name}
-          onClick={() => onOpenCourse(course)}
-        >
-          <span className="course-row-name">
-            <strong>{course.name}</strong>
-          </span>
-          <Metric label="Total Calls" value={course.totalCalls} />
-          <Metric label="Successful Bookings" value={course.successful} />
-          <Metric label="Booking Not Completed" value={course.notCompleted} />
-          <Metric label="Unclear Calls" value={course.unclear} />
-          <Metric label="Conversion" value={course.conversionLabel} />
-        </button>
-      ))}
+      <div className="course-group" aria-label="V1 Course List" data-count={courses.length}>
+        <CourseRows courses={courses} onOpenCourse={onOpenCourse} />
+      </div>
+    </section>
+  )
+}
+
+function CourseList({ scoCourses, mcoCourses, search, onSearch, onOpenCourse }) {
+  const total = scoCourses.length + mcoCourses.length
+  return (
+    <section className="course-list" aria-label="Courses" data-count={total}>
+      <div className="list-tools">
+        <h2>Courses {total}</h2>
+        <label>
+          Search courses
+          <input
+            type="search"
+            value={search}
+            placeholder="Course name"
+            onChange={(event) => onSearch(event.target.value)}
+          />
+        </label>
+      </div>
+      <div className="course-group" aria-label="SCO Course List" data-count={scoCourses.length}>
+        <h3>SCO Course List {scoCourses.length}</h3>
+        <CourseRows courses={scoCourses} onOpenCourse={onOpenCourse} />
+      </div>
+      <div className="course-group" aria-label="MCO list" data-count={mcoCourses.length}>
+        <h3>MCO list {mcoCourses.length}</h3>
+        <CourseRows courses={mcoCourses} onOpenCourse={onOpenCourse} />
+      </div>
     </section>
   )
 }
@@ -878,7 +938,7 @@ function CourseDetail({
   }
   return (
     <>
-      <section className="summary" aria-label="Course summary" data-course={course.name} data-date={course.date}>
+      <section className="summary" aria-label="Course summary" data-course={course.name} data-kind={course.kind || undefined} data-date={course.date}>
         <div className="summary-head">
           <h2>{course.name}</h2>
           <div className="views">
