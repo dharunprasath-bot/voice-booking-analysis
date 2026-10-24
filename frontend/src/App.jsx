@@ -27,6 +27,24 @@ function sameCourse(course, selected) {
   return course.name === selected.name && (course.kind || "") === (selected.kind || "")
 }
 
+const REPORT_FETCH_TIMEOUT_MS = 20000
+const LOAD_ERROR = "Unable to load report. Please try again."
+const TIMEOUT_ERROR = "The report request timed out. Please try again."
+
+async function fetchReportJson(url) {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), REPORT_FETCH_TIMEOUT_MS)
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    const body = await response.json()
+    return { response, body }
+  } catch (error) {
+    throw new Error(error && error.name === "AbortError" ? TIMEOUT_ERROR : LOAD_ERROR)
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
+
 function DateMenu({ value, dates, disabled, onChange }) {
   const [open, setOpen] = useState(false)
   const [menuBox, setMenuBox] = useState(null)
@@ -150,9 +168,8 @@ export default function App() {
     let cancelled = false
     async function loadList() {
       try {
-        const response = await fetch("/api/reports")
-        const body = await response.json().catch(() => ({}))
-        if (!response.ok || !Array.isArray(body.reports)) throw new Error("list")
+        const { response, body } = await fetchReportJson("/api/reports")
+        if (!response.ok || !Array.isArray(body.reports)) throw new Error(LOAD_ERROR)
         const found = [
           ...new Set(
             body.reports
@@ -164,22 +181,21 @@ export default function App() {
           ),
         ].sort().reverse()
         if (cancelled) return
-        const oldest = found[found.length - 1] || ""
         const newest = found[0] || ""
         setDates(found)
         setDateFilter((current) => current || newest)
-        setCompareFrom((current) => current || oldest)
+        setCompareFrom((current) => current || newest)
         setCompareTo((current) => current || newest)
-        setDailyFrom((current) => current || oldest)
+        setDailyFrom((current) => current || newest)
         setDailyTo((current) => current || newest)
         setListReady(true)
         if (!found.length) {
           setStatus("No saved reports yet.")
           setLoading(false)
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setStatus("Unable to load report. Please try again.")
+          setStatus(error.message === TIMEOUT_ERROR ? TIMEOUT_ERROR : LOAD_ERROR)
           setLoading(false)
         }
       }
@@ -239,8 +255,11 @@ export default function App() {
   )
 
   const neededKey = useMemo(() => {
-    return [...new Set([...activeDates, ...comparisonDates, ...dailyDates])].sort().join(",")
-  }, [activeDates, comparisonDates, dailyDates])
+    let needed = activeDates
+    if (page === "comparison") needed = comparisonDates
+    else if (page === "detail") needed = [...activeDates, ...dailyDates]
+    return [...new Set(needed)].sort().reverse().join(",")
+  }, [page, activeDates, comparisonDates, dailyDates])
 
   const courseComparisonDays = useMemo(() => {
     if (!selectedCourse) return []
@@ -253,35 +272,35 @@ export default function App() {
     if (!listReady) return
     const missing = neededKey ? neededKey.split(",").filter((date) => date && !loadedDates.current.has(date)) : []
     if (!missing.length) {
+      setStatus((current) => (current === "No saved reports yet." ? current : ""))
       setLoading(false)
       return
     }
     let cancelled = false
     setLoading(true)
+    setStatus("Loading saved reports…")
     async function loadMissing() {
       try {
-        const loaded = []
         for (const date of missing) {
           const name = `courses-${date}.txt`
-          const response = await fetch(`/api/reports?name=${encodeURIComponent(name)}`)
-          const body = await response.json().catch(() => ({}))
-          if (!response.ok || typeof body.text !== "string") throw new Error("file")
+          const { response, body } = await fetchReportJson(`/api/reports?name=${encodeURIComponent(name)}`)
+          if (!response.ok || typeof body.text !== "string") throw new Error(LOAD_ERROR)
           const report = parseReport(body.text, body.name || name)
-          if (report.date !== date) throw new Error("file")
-          loaded.push(report)
+          if (report.date !== date) throw new Error(LOAD_ERROR)
+          if (cancelled) return
+          loadedDates.current.add(report.date)
+          setReports((current) => {
+            const byDate = new Map(current.map((item) => [item.date, item]))
+            byDate.set(report.date, report)
+            return [...byDate.values()]
+          })
         }
         if (cancelled) return
-        for (const report of loaded) loadedDates.current.add(report.date)
-        setReports((current) => {
-          const byDate = new Map(current.map((report) => [report.date, report]))
-          for (const report of loaded) byDate.set(report.date, report)
-          return [...byDate.values()]
-        })
         setStatus("")
         setLoading(false)
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setStatus("Unable to load report. Please try again.")
+          setStatus(error.message === TIMEOUT_ERROR ? TIMEOUT_ERROR : LOAD_ERROR)
           setLoading(false)
         }
       }
@@ -346,13 +365,18 @@ export default function App() {
     return names
   }, [detailRows, reasonFilter])
 
-  const ready = !loading && !status
+  const neededLoaded = useMemo(() => {
+    const have = new Set(reports.map((report) => report.date))
+    return neededKey.split(",").filter(Boolean).every((date) => have.has(date))
+  }, [reports, neededKey])
+
+  const ready = !loading && !status && neededLoaded
 
   useEffect(() => {
     if (!dates.length) return
-    setCompareFrom((current) => current || dates[dates.length - 1])
+    setCompareFrom((current) => current || dates[0])
     setCompareTo((current) => current || dates[0])
-    setDailyFrom((current) => current || dates[dates.length - 1])
+    setDailyFrom((current) => current || dates[0])
     setDailyTo((current) => current || dates[0])
   }, [dates])
 
