@@ -7,8 +7,8 @@ function courseLines(course, reasonName) {
     `Date: ${course.date}`,
     `Total Calls: ${course.totalCalls}`,
     `Successful Bookings: ${course.successful}`,
-    `Booking Not Completed: ${course.notCompleted}`,
-    `Unclear Calls: ${course.unclear}`,
+    `Not Booked (Saved Reason): ${course.notCompleted}`,
+    `Reason Not Available: ${course.unclear}`,
     `Conversion: ${course.conversion}`,
     "",
     "Why bookings were not completed:",
@@ -38,8 +38,10 @@ export function summaryText(summary) {
     summary.searchLabel ? `Search: ${summary.searchLabel}` : "",
     `Total Calls: ${summary.totalCalls}`,
     `Successful Bookings: ${summary.successful}`,
-    `Booking Not Completed: ${summary.notCompleted}`,
-    `Unclear Calls: ${summary.unclear}`,
+    `Not Booked (Saved Reason): ${summary.notCompleted}`,
+    `Reason Not Available: ${summary.unclear}`,
+    summary.withTranscript != null ? `Calls With Transcript: ${summary.withTranscript}` : "",
+    summary.withoutTranscript != null ? `Calls Without Transcript: ${summary.withoutTranscript}` : "",
     `Conversion: ${summary.conversion}`,
     summary.reasonTotalLabel || "",
     summary.coursesAffectedLabel || "",
@@ -88,7 +90,7 @@ export function filteredText(summary, courses, reasonGroups) {
   lines.push("Courses")
   for (const course of courses) {
     lines.push(
-      `${course.name} | ${course.date} | Total Calls: ${course.totalCalls} | Successful Bookings: ${course.successful} | Booking Not Completed: ${course.notCompleted} | Unclear Calls: ${course.unclear} | Conversion: ${course.conversion}`,
+      `${course.name} | ${course.date} | Total Calls: ${course.totalCalls} | Successful Bookings: ${course.successful} | Not Booked (Saved Reason): ${course.notCompleted} | Reason Not Available: ${course.unclear} | Conversion: ${course.conversion}`,
     )
   }
   lines.push("", "Failure Reasons")

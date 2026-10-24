@@ -1,0 +1,228 @@
+COURSE AUDIT
+
+SUPERSEDED: the dashboard no longer reads booking outcomes from the saved reports.
+Booked now means a bookings row with booking_session_id = call_id, booking channel voice,
+and status completed, confirmed, or booked. See flow-validation.txt for the current counts.
+The audit below describes the earlier report-based outcomes and is kept for history.
+
+Period: 2024-04-24 through 2026-10-23, America/New_York.
+Classification uses only conversations.golf_course_id and conversations.organization_id.
+A Golf Course ID is SCO even when an Organization ID is also present.
+An Organization ID is MCO only when the Golf Course ID is absent.
+A call with neither ID is unclassified. It is not SCO, MCO, or V1.
+Welcome text, transcripts, voice numbers, and voice configuration are not used.
+Nothing was committed or deployed.
+
+TOTALS
+
+Conversations: 364216
+SCO: database 6975, report 6076
+MCO: database 2084, report 1834
+Unclassified: database 355157, report section 356306
+The report SCO and MCO lists sum to 7910. Successful 715, not completed 6664, unclear 531.
+Unclassified section: 356306 calls. Successful 48737, not completed 248050, unclear 59519.
+715 + 48737 = 49452 successful. 6664 + 248050 = 254714 not completed. 531 + 59519 = 60050 unclear.
+Those are the same booking outcomes as before this change. Call narratives were not edited.
+No Category V1 remains. 254714 failure Call IDs, 0 duplicates.
+
+The 1149-call difference is 899 SCO and 250 MCO.
+Those conversations have an ID, but the saved report has no Call ID for them because they are successful or unclear.
+They sit in a block that also contains other unlabeled calls, so they were not moved onto the SCO or MCO course.
+Moving them would have required deciding which unlabeled calls were successful and which were unclear.
+They are counted once, in the unclassified section. They are not also counted as SCO or MCO.
+
+ADMIN DASHBOARD
+
+The Admin Dashboard counts a call for a course when the voice number's configuration points at that course.
+This report does not. A call counts only when the conversation row itself has the ID.
+Kapalua Golf, Golf Course ID 168: this report has 9 calls, all not completed, 0 successful.
+The voice configuration for Kapalua covers 322 calls. 313 of those conversations have no Golf Course ID, so they are unclassified here.
+Across the full period, voice-configuration assignment previously produced 242576 SCO calls and 48066 MCO calls.
+Conversation IDs alone produce 6975 SCO calls and 2084 MCO calls. The rest have neither ID.
+
+TABLE JOINS
+
+conversations.golf_course_id = golf_courses.id
+conversations.organization_id = organizations.id
+voice_numbers.voice_channel_config_id = voice_channel_configurations.id
+voice_numbers.phone_number matches conversations.vapi_golf_course_phone_no
+voice_channel_configurations.golf_course_id = golf_courses.id
+voice_channel_configurations.organization_id = organizations.id
+
+The database has no declared foreign keys. These are the matching columns.
+280 voice numbers, 280 distinct phone numbers, 280 configurations.
+0 phones map to more than one Golf Course ID.
+0 phones map to more than one Organization ID.
+Joining every conversation to its voice number produces 290609 rows and 290609 distinct conversations. The join does not duplicate calls.
+0 duplicate conversation IDs. 0 duplicate Call IDs.
+0 conversations have both a Golf Course ID and an Organization ID.
+0 SCO IDs are missing from golf_courses. 0 MCO IDs are missing from organizations.
+102 Golf Course IDs have calls. 14 Organization IDs have calls. No two of those IDs share an official name.
+
+Phone match for conversations that already have an ID:
+SCO phone matches the same Golf Course ID: 6943
+SCO ID present, phone not in voice_numbers: 32
+MCO phone matches the same Organization ID: 2083
+MCO ID present, phone not in voice_numbers: 1
+Those 33 calls stay on the conversation ID. A missing phone mapping does not remove them.
+
+Calls whose phone maps to a course but whose conversation IDs are both NULL, left unclassified:
+235601 phones map to a Golf Course ID
+45982 phones map to an Organization ID only
+73574 phones are not mapped
+235601 + 6975 = 242576 and 45982 + 2084 = 48066. Those larger totals are the old voice-configuration assignment. They are not the SCO and MCO counts.
+
+Nine Golf Course IDs have more than one phone number. Joining those phones does not increase the conversation count. Kapalua Golf, ID 168, has 2 phones, 9 conversations with that ID, and 313 other calls on those phones with neither conversation ID. Golf Course ID 10, Shadow Mountain Golf Course, has 1 phone and 21 conversations with that ID.
+
+Saved report files were not overwritten. Their failure narratives and booking outcomes are unchanged.
+The Course List, Dashboard, V1 Course List, Daily Comparison, and All Dates now take call counts from the table flow, not from those report headers.
+
+SCREEN COUNTS FROM THE TABLE FLOW
+
+SCO 6975
+MCO 2084
+Unclassified 355157
+Conversations 364216
+Duplicate join rows 0
+Duplicate call ids 0
+Phones mapped to more than one Golf Course ID 0
+Course rows 116: 102 SCO and 14 MCO
+All Dates total calls 9059
+October 23 classified calls 1539
+October 21 classified calls 1027
+Kapalua Golf, Golf Course ID 168: 9
+Shadow Mountain Golf Course, Golf Course ID 10: 21
+V1 Course List 0
+
+COURSES THAT MATCH (42)
+
+  MCO  Club de Golf de Plessisiville et Golf des Bois Francs  calls 13  successful 0  not completed 13  unclear 0
+  MCO  Falmouth Country Club  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Airport Golf Club  calls 42  successful 12  not completed 26  unclear 4
+  SCO  Bear Creek Golf Club  calls 16  successful 1  not completed 15  unclear 0
+  SCO  Black Diamond at Forest Hills Resort  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Boone's Trace National Golf Club  calls 31  successful 2  not completed 19  unclear 10
+  SCO  Club de Golf de Plessisville  calls 2  successful 0  not completed 2  unclear 0
+  SCO  Club de golf Owls Head  calls 8  successful 0  not completed 8  unclear 0
+  SCO  Copley Country Club  calls 9  successful 0  not completed 9  unclear 0
+  SCO  Deer Run Golf Club  calls 20  successful 0  not completed 20  unclear 0
+  SCO  Elkhorn Ridge Golf Club  calls 146  successful 23  not completed 112  unclear 11
+  SCO  Espanola Golf and Country Club  calls 11  successful 0  not completed 3  unclear 8
+  SCO  Evansville Golf Club  calls 19  successful 1  not completed 13  unclear 5
+  SCO  Golf Dorval  calls 14  successful 0  not completed 14  unclear 0
+  SCO  Golf des Bois Francs  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Hinton Golf Club  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Kapalua Golf  calls 9  successful 0  not completed 9  unclear 0
+  SCO  Kingham Prairie View Golf Course  calls 46  successful 22  not completed 22  unclear 2
+  SCO  Lee Park Golf Course  calls 78  successful 4  not completed 69  unclear 5
+  SCO  Old Avalon Golf Course  calls 5  successful 0  not completed 5  unclear 0
+  SCO  Patriots Glen Golf Course  calls 21  successful 13  not completed 7  unclear 1
+  SCO  Pearland Golf Club  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Pickering Glen Golf Club  calls 13  successful 1  not completed 12  unclear 0
+  SCO  Puslinch Golf Club  calls 6  successful 0  not completed 4  unclear 2
+  SCO  Rifle Creek Golf Course  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Sanibel Island Golf Club  calls 6  successful 0  not completed 6  unclear 0
+  SCO  Silver Lakes Golf and Country Club  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Sioux Creek Golf Course  calls 11  successful 1  not completed 10  unclear 0
+  SCO  Smoky Mountain Country Club  calls 30  successful 2  not completed 17  unclear 11
+  SCO  The Algonquin Resort  calls 3  successful 0  not completed 3  unclear 0
+  SCO  The Fields Golf Club  calls 20  successful 0  not completed 18  unclear 2
+  SCO  The Manor Golf Club  calls 1  successful 0  not completed 1  unclear 0
+  SCO  The Ranch Course  calls 1  successful 0  not completed 1  unclear 0
+  SCO  The Ranch Golf Club  calls 67  successful 2  not completed 46  unclear 19
+  SCO  The Salt Pond Golf Club  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Trillium Wood Golf Club  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Trilogy Golf Club at La Quinta  calls 9  successful 0  not completed 9  unclear 0
+  SCO  Valley Regional Park  calls 1  successful 0  not completed 1  unclear 0
+  SCO  Weathervane Golf Club  calls 2  successful 0  not completed 2  unclear 0
+  SCO  Wildhorse Golf Club  calls 2  successful 0  not completed 2  unclear 0
+  SCO  Willbrook Plantation Golf Club  calls 91  successful 2  not completed 83  unclear 6
+  SCO  Zephyrhills Golf Course  calls 4  successful 0  not completed 4  unclear 0
+
+COURSES SHORT OF THE DATABASE (74)
+
+Report is lower because successful or unclear calls for that ID have no Call ID and could not be separated.
+  SCO  Wyncote Golf Club  database 351  report 248  not placed 103  successful 3  not completed 240  unclear 5
+  MCO  Arizona Biltmore Golf Club  database 692  report 610  not placed 82  successful 3  not completed 594  unclear 13
+  SCO  The Tradition Golf Club  database 277  report 207  not placed 70  successful 29  not completed 167  unclear 11
+  SCO  Highland Creek Golf Club  database 262  report 199  not placed 63  successful 20  not completed 168  unclear 11
+  SCO  Hughes Creek Golf Course  database 403  report 344  not placed 59  successful 0  not completed 344  unclear 0
+  SCO  Oak Valley Golf Club  database 162  report 108  not placed 54  successful 3  not completed 86  unclear 19
+  SCO  The Divide Golf Club  database 247  report 202  not placed 45  successful 54  not completed 142  unclear 6
+  SCO  Meramec Lakes Golf Course  database 207  report 167  not placed 40  successful 24  not completed 141  unclear 2
+  MCO  Osoyoos Golf Club  database 163  report 126  not placed 37  successful 0  not completed 85  unclear 41
+  SCO  Heritage Harbour Golf Club  database 353  report 317  not placed 36  successful 4  not completed 302  unclear 11
+  MCO  Wilkes Barre and Hollenback Golf  database 164  report 130  not placed 34  successful 14  not completed 114  unclear 2
+  SCO  Putnam County Golf Course  database 63  report 30  not placed 33  successful 1  not completed 29  unclear 0
+  MCO  Wigwam Golf Club  database 484  report 451  not placed 33  successful 9  not completed 433  unclear 9
+  SCO  Valley of the Eagles Golf Course  database 175  report 149  not placed 26  successful 31  not completed 117  unclear 1
+  SCO  Serket  database 72  report 51  not placed 21  successful 1  not completed 49  unclear 1
+  MCO  Park Mammoth Golf Course  database 40  report 19  not placed 21  successful 0  not completed 19  unclear 0
+  SCO  Waterford Golf Club  database 174  report 155  not placed 19  successful 29  not completed 112  unclear 14
+  SCO  Black Gold Golf Club  database 67  report 48  not placed 19  successful 3  not completed 30  unclear 15
+  SCO  Fire Ridge Golf Club  database 233  report 215  not placed 18  successful 37  not completed 163  unclear 15
+  SCO  Chariot Run  database 152  report 134  not placed 18  successful 4  not completed 112  unclear 18
+  SCO  Breton Golf Course  database 37  report 21  not placed 16  successful 0  not completed 12  unclear 9
+  MCO  The Eagles Golf Club  database 225  report 209  not placed 16  successful 41  not completed 157  unclear 11
+  SCO  Pointe Royale Golf Course  database 243  report 228  not placed 15  successful 14  not completed 204  unclear 10
+  SCO  Bella Vista Golf Course  database 53  report 39  not placed 14  successful 2  not completed 35  unclear 2
+  SCO  Apple Mountain Golf Club  database 123  report 109  not placed 14  successful 0  not completed 108  unclear 1
+  SCO  Salishan Golf Links  database 48  report 35  not placed 13  successful 1  not completed 29  unclear 5
+  SCO  Grand Bear Golf Club  database 85  report 72  not placed 13  successful 1  not completed 61  unclear 10
+  SCO  Timber Truss Golf Course  database 191  report 179  not placed 12  successful 4  not completed 171  unclear 4
+  SCO  Deerwood Golf Course  database 127  report 115  not placed 12  successful 24  not completed 81  unclear 10
+  SCO  Capitol City Golf Club  database 94  report 82  not placed 12  successful 29  not completed 47  unclear 6
+  SCO  Voyager VIllage  database 42  report 31  not placed 11  successful 0  not completed 25  unclear 6
+  SCO  The Crossings Golf Club  database 220  report 210  not placed 10  successful 85  not completed 112  unclear 13
+  SCO  Arrowhead Country Club  database 78  report 68  not placed 10  successful 5  not completed 61  unclear 2
+  MCO  UNM Championship Course  database 151  report 141  not placed 10  successful 0  not completed 129  unclear 12
+  SCO  South Padre Island Golf Club  database 178  report 169  not placed 9  successful 3  not completed 152  unclear 14
+  MCO  UNM North Course  database 108  report 99  not placed 9  successful 9  not completed 88  unclear 2
+  SCO  Willow Wood Golf Club  database 24  report 17  not placed 7  successful 4  not completed 10  unclear 3
+  SCO  The Revival Golf Course  database 144  report 137  not placed 7  successful 16  not completed 116  unclear 5
+  SCO  Heritage Hills Golf Course  database 22  report 15  not placed 7  successful 0  not completed 13  unclear 2
+  SCO  Serenoa Golf Club  database 103  report 97  not placed 6  successful 24  not completed 69  unclear 4
+  SCO  River Bend Golf Course  database 58  report 52  not placed 6  successful 3  not completed 42  unclear 7
+  SCO  Heritage Ridge Golf Club  database 47  report 41  not placed 6  successful 7  not completed 19  unclear 15
+  SCO  Cottonwood Golf Club  database 247  report 241  not placed 6  successful 15  not completed 211  unclear 15
+  SCO  Yucaipa Valley Golf Course  database 64  report 59  not placed 5  successful 8  not completed 45  unclear 6
+  SCO  River Club  database 151  report 146  not placed 5  successful 6  not completed 132  unclear 8
+  SCO  Glendarin Hills Golf Club  database 35  report 30  not placed 5  successful 2  not completed 21  unclear 7
+  SCO  Avondale Golf Club  database 32  report 27  not placed 5  successful 1  not completed 24  unclear 2
+  SCO  Trilogy Golf Club at Vistancia  database 13  report 9  not placed 4  successful 0  not completed 9  unclear 0
+  SCO  North Palm Beach Country Club  database 30  report 26  not placed 4  successful 7  not completed 16  unclear 3
+  SCO  Twin Isles Country Club  database 119  report 116  not placed 3  successful 13  not completed 93  unclear 10
+  SCO  Paganica Golf Course  database 26  report 23  not placed 3  successful 4  not completed 17  unclear 2
+  SCO  Mid Pines Inn & Golf Club  database 3  report 0  not placed 3  successful 0  not completed 0  unclear 0
+  SCO  Meadow Lake Golf Course  database 24  report 21  not placed 3  successful 2  not completed 16  unclear 3
+  SCO  Dundee Resort & Golf Club  database 13  report 10  not placed 3  successful 0  not completed 9  unclear 1
+  SCO  Costa del Sol Golf Club  database 18  report 15  not placed 3  successful 0  not completed 10  unclear 5
+  SCO  Charwood Golf Club  database 146  report 143  not placed 3  successful 25  not completed 109  unclear 9
+  SCO  Boulder Canyon Golf Club  database 29  report 26  not placed 3  successful 0  not completed 25  unclear 1
+  MCO  Great Gorge Golf Club  database 7  report 4  not placed 3  successful 0  not completed 4  unclear 0
+  SCO  Walsh Golf Center  database 8  report 6  not placed 2  successful 0  not completed 5  unclear 1
+  SCO  The Course at Pillow Springs  database 16  report 14  not placed 2  successful 1  not completed 7  unclear 6
+  SCO  Bristol Ridge Golf Course  database 51  report 49  not placed 2  successful 1  not completed 44  unclear 4
+  SCO  Amelia County Golf Club  database 8  report 6  not placed 2  successful 0  not completed 4  unclear 2
+  MCO  Sebring International Golf Resort  database 32  report 30  not placed 2  successful 0  not completed 26  unclear 4
+  MCO  Cardinal Golf Club  database 3  report 1  not placed 2  successful 0  not completed 1  unclear 0
+  SCO  Shadow Mountain Golf Course  database 21  report 20  not placed 1  successful 0  not completed 18  unclear 2
+  SCO  Rio Grande Club & Resort  database 26  report 25  not placed 1  successful 1  not completed 21  unclear 3
+  SCO  Laughlin Ranch Golf Club  database 1  report 0  not placed 1  successful 0  not completed 0  unclear 0
+  SCO  La Margherita Golf Club  database 19  report 18  not placed 1  successful 1  not completed 13  unclear 4
+  SCO  Hales Mills Country Club  database 3  report 2  not placed 1  successful 1  not completed 1  unclear 0
+  SCO  Emerald Canyon Golf Course  database 1  report 0  not placed 1  successful 0  not completed 0  unclear 0
+  SCO  Clare Golf Club  database 2  report 1  not placed 1  successful 0  not completed 1  unclear 0
+  SCO  Cascata  database 1  report 0  not placed 1  successful 0  not completed 0  unclear 0
+  SCO  Caradoc Sands Golf Club  database 1  report 0  not placed 1  successful 0  not completed 0  unclear 0
+  MCO  Airport and Kingham Prairie View  database 1  report 0  not placed 1  successful 0  not completed 0  unclear 0
+
+October 21 classified calls in the report: SCO 728, MCO 172, successful 87, not completed 773, unclear 40.
+
+CHECKS
+
+Every failure narrative line matches the previous saved report.
+Different IDs do not share an official name, so similar names were not merged.
+The Lakes Course and The Lakes Courses stay separate when each ID has calls. A name with no ID is not given a course row.
+Classifier check: a Golf Course ID stays SCO when an Organization ID is present, an Organization ID alone is MCO, and a welcome message with no ID stays unclassified.
+Frontend build: npm run build completed in 1.60s. The existing warning remains: the main chunk is larger than 500 kB. There is no backend test suite.

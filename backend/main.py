@@ -4,12 +4,15 @@
     python3 backend/main.py --course 17044862984 --date 2026-09-30
     python3 backend/main.py --fetch-courses --date 2026-09-30
     python3 backend/main.py --history
+    python3 backend/main.py --flow
+    python3 backend/main.py --transcript CALL_ID
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import sys
@@ -26,6 +29,7 @@ from analyzer import (
     course_evidence,
     summarize_results,
 )
+import course_flow
 from courses import FETCH_COURSES
 from database import (
     DatabaseConnectionError,
@@ -33,6 +37,7 @@ from database import (
     connect,
     fetch_conversations,
     fetch_coursewise_conversations,
+    fetch_daily_classified_counts,
     fetch_daily_conversation_counts,
     fetch_first_report_day,
     fetch_golf_course_names,
@@ -108,6 +113,27 @@ def parse_args() -> argparse.Namespace:
         help="Timezone used when --date is set.",
     )
     parser.add_argument(
+        "--flow",
+        action="store_true",
+        help=(
+            "Build the course, booking, and saved-reason flow for 2024-04-24 through "
+            "--through (default 2026-10-23). Reads the database and saved reports only, "
+            "writes .flow-cache/ and flow-validation.txt, and never changes report files."
+        ),
+    )
+    parser.add_argument(
+        "--through",
+        type=_parse_date,
+        default=date(2026, 10, 23),
+        help="Last calendar day for --flow, YYYY-MM-DD.",
+    )
+    parser.add_argument(
+        "--transcript",
+        default=None,
+        metavar="CALL_ID",
+        help="Print one conversation transcript as JSON, looked up by call_id.",
+    )
+    parser.add_argument(
         "--history",
         action="store_true",
         help=(
@@ -174,6 +200,7 @@ def _apply_course_booking(conversation: dict, analysis: dict) -> dict:
     status = conversation.get("booking_record_status")
     analysis["course_name"] = conversation.get("course_name") or analysis.get("course_name")
     analysis["course_kind"] = conversation.get("course_kind") or analysis.get("course_kind") or ""
+    analysis["course_id"] = conversation.get("course_id")
     if status == "booked":
         analysis["booking_status"] = "Booking Successful"
         analysis["failure_reason"] = ""
@@ -406,9 +433,10 @@ def _history_validation_text(
     sco_rows: list[dict],
     mco_rows: list[dict],
     day_rows: list[dict],
+    conversation_total: int,
 ) -> str:
     overall = sum(int(row["call_count"]) for row in sco_rows) + sum(int(row["call_count"]) for row in mco_rows)
-    # Day totals count every conversation, including V1. Course totals do not.
+    # A day matches when the report total equals calls that have a conversation ID.
     day_total = sum(int(row["database_count"]) for row in day_rows)
     missing = [
         row["day"] for row in day_rows
@@ -426,8 +454,11 @@ def _history_validation_text(
         f"Timezone: {timezone_name}",
         f"First day: {first_day.isoformat() if first_day else 'none'}",
         f"Through: {through.isoformat()}",
-        f"Conversation total: {day_total}",
+        f"Conversation total: {conversation_total}",
         f"SCO and MCO calls: {overall}",
+        f"Unclassified calls: {conversation_total - overall}",
+        "Unclassified calls have neither ID and are not an SCO, MCO, or V1 course.",
+        "Each day database count is the SCO and MCO calls for that day.",
         "",
         "SCO COURSES",
         "",
@@ -495,6 +526,7 @@ def _write_history_validation(
     sco_rows: list[dict],
     mco_rows: list[dict],
     day_rows: list[dict],
+    conversation_total: int,
 ) -> Path:
     folder = _reports_dir()
     folder.mkdir(parents=True, exist_ok=True)
@@ -506,6 +538,7 @@ def _write_history_validation(
         sco_rows=sco_rows,
         mco_rows=mco_rows,
         day_rows=day_rows,
+        conversation_total=conversation_total,
     )
     path.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
     return path
@@ -528,17 +561,24 @@ def _run_history(args: argparse.Namespace) -> int:
         sco_rows = fetch_sco_history(connection, timezone_name=timezone_name, through=through)
         mco_rows = fetch_mco_history(connection, timezone_name=timezone_name, through=through)
         daily = {}
+        every_call = {}
         if first_day is not None and first_day <= through:
-            daily = fetch_daily_conversation_counts(
+            daily = fetch_daily_classified_counts(
                 connection,
                 timezone_name=timezone_name,
                 first_day=first_day,
                 through=through,
             )
-        return first_day, sco_rows, mco_rows, daily
+            every_call = fetch_daily_conversation_counts(
+                connection,
+                timezone_name=timezone_name,
+                first_day=first_day,
+                through=through,
+            )
+        return first_day, sco_rows, mco_rows, daily, every_call
 
     try:
-        first_day, sco_rows, mco_rows, daily = call_with_connection(
+        first_day, sco_rows, mco_rows, daily, every_call = call_with_connection(
             load_history,
             description="Preparing historical reports",
             on_retry=_announce_database_retry,
@@ -561,6 +601,7 @@ def _run_history(args: argparse.Namespace) -> int:
                 "status": "pending",
             })
             day += timedelta(days=1)
+    conversation_total = sum(every_call.values())
     saved = _write_history_validation(
         timezone_name=timezone_name,
         first_day=first_day,
@@ -568,6 +609,7 @@ def _run_history(args: argparse.Namespace) -> int:
         sco_rows=sco_rows,
         mco_rows=mco_rows,
         day_rows=day_rows,
+        conversation_total=conversation_total,
     )
     print(f"Saved validation: {saved}", file=sys.stderr)
     if not day_rows:
@@ -585,33 +627,10 @@ def _run_history(args: argparse.Namespace) -> int:
             status = "skipped"
             print(f"{day.isoformat()} skipped {database_count}", file=sys.stderr)
         else:
+            status = "mismatched" if path.exists() else "missing"
             print(
-                f"{day.isoformat()} generating {database_count} conversation(s).",
-                file=sys.stderr,
-            )
-            day_args = argparse.Namespace(**vars(args))
-            day_args.date = day
-            day_args.course = None
-            day_args.history = False
-            day_args.fetch_courses = False
-            try:
-                _run_coursewise(day_args, echo=False)
-            except DatabaseConnectionError as error:
-                print(
-                    f"{day.isoformat()} stopped. This date was not saved because the "
-                    f"database connection failed. {error}",
-                    file=sys.stderr,
-                )
-                print(
-                    "Reports that already match the database were kept. "
-                    "Run the same --history command to resume this date.",
-                    file=sys.stderr,
-                )
-                return 1
-            report_count = _saved_call_total(path)
-            status = "generated" if report_count == database_count else "mismatched"
-            print(
-                f"{day.isoformat()} {status} database {database_count} report {report_count}",
+                f"{day.isoformat()} {status}. database {database_count} "
+                f"report {report_count}. Existing report was not regenerated.",
                 file=sys.stderr,
             )
         row["report_count"] = report_count
@@ -623,6 +642,7 @@ def _run_history(args: argparse.Namespace) -> int:
             sco_rows=sco_rows,
             mco_rows=mco_rows,
             day_rows=day_rows,
+            conversation_total=conversation_total,
         )
 
     print(f"Saved validation: {saved}", file=sys.stderr)
@@ -630,9 +650,61 @@ def _run_history(args: argparse.Namespace) -> int:
     return 1 if mismatched else 0
 
 
+def _build_flow(args: argparse.Namespace) -> int:
+    """Read-only flow build. Writes the cache and validation text, never a report file."""
+    print(
+        f"Building the course flow {course_flow.FIRST_DAY.isoformat()} through "
+        f"{args.through.isoformat()} ({args.timezone}).",
+        file=sys.stderr,
+    )
+    try:
+        result = call_with_connection(
+            lambda connection: course_flow.build_flow(
+                connection,
+                timezone_name=args.timezone,
+                through=args.through,
+            ),
+            description="Building the course flow",
+            on_retry=_announce_database_retry,
+        )
+    except DatabaseConnectionError as error:
+        print(f"The course flow could not be read. {error}", file=sys.stderr)
+        return 1
+    cache = course_flow.write_cache(result)
+    text = course_flow.validation_text(result["flow"])
+    course_flow.VALIDATION_PATH.write_text(text, encoding="utf-8")
+    validation = result["flow"]["validation"]
+    totals = validation["totals"]
+    print(json.dumps({"cache": str(cache), "totals": totals, "checks": validation["checks"]}))
+    print(
+        f"Calls {totals.get('calls', 0)} booked {totals.get('booked', 0)} "
+        f"saved reason {totals.get('saved', 0)} reason not available {totals.get('unknown', 0)}. "
+        f"Validation: {course_flow.VALIDATION_PATH}",
+        file=sys.stderr,
+    )
+    return 0 if all(validation["checks"].values()) else 1
+
+
+def _print_transcript(args: argparse.Namespace) -> int:
+    found = call_with_connection(
+        lambda connection: course_flow.fetch_transcript(connection, args.transcript),
+        description="Reading a transcript",
+        on_retry=_announce_database_retry,
+    )
+    if found is None:
+        print(json.dumps({"error": "Transcript not found."}))
+        return 1
+    print(json.dumps(found))
+    return 0
+
+
 def main() -> int:
     load_dotenv()
     args = parse_args()
+    if args.flow:
+        return _build_flow(args)
+    if args.transcript:
+        return _print_transcript(args)
     if args.history:
         return _run_history(args)
     if args.fetch_courses:

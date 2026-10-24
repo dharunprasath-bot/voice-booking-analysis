@@ -209,11 +209,15 @@ export function summarize(courses) {
   const successful = (courses || []).reduce((sum, course) => sum + safeNumber(course.successful), 0)
   const notCompleted = (courses || []).reduce((sum, course) => sum + safeNumber(course.notCompleted), 0)
   const unclear = (courses || []).reduce((sum, course) => sum + safeNumber(course.unclear), 0)
+  const withTranscript = (courses || []).reduce((sum, course) => sum + safeNumber(course.withTranscript), 0)
   return {
     totalCalls,
     successful,
     notCompleted,
     unclear,
+    notBooked: notCompleted + unclear,
+    withTranscript,
+    withoutTranscript: totalCalls - withTranscript,
     conversion: conversionPercent(successful, totalCalls),
   }
 }

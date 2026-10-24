@@ -4,7 +4,7 @@ Date: 2026-05-31
 
 FAILURE REASONS
 
-Tee Time Unavailable: 1
+Tee Time Unavailable: 0
 Customer Rejected Alternative Time: 0
 Date/Time Issue: 0
 Player Count Issue: 0
@@ -13,25 +13,30 @@ Voice Recognition Issue: 0
 Call Disconnected: 0
 Technical/API Issue: 0
 Payment Issue: 0
-Transfer Issue: 23
+Transfer Issue: 0
 Customer Changed Mind: 0
-Customer Abandoned: 2
-Information Only: 1
-Other: 1
+Customer Abandoned: 0
+Information Only: 0
+Other: 0
 Unclear: 0
 
-Course: Sonora Dunes Golf Course
-Category: SCO
+UNCLASSIFIED CALLS
 
-Total Calls: 10
-Successful Bookings: 1
-Booking Not Completed: 9
-Unclear Calls: 0
-Conversion: 10.0%
+These calls are not an SCO course, an MCO course, or a V1 course.
+A call is unclassified when the conversation has no Golf Course ID and no Organization ID.
+Unclassified calls: 43
+Successful Bookings: 9
+Booking Not Completed: 28
+Unclear Calls: 6
 
 Why bookings were not completed:
 
-1. Transfer Issue – 8
+1. Tee Time Unavailable – 1
+   - Call ID: 019e80b5-16ea-7000-859a-cbecfaf89e64
+     What happened: The golfer asked for Sunday, June 7 for 4 players after 2 PM, 18 holes. The AI checked availability and found no tee times because the course was closed for aeration from May 26 through June 7, reopening Monday, June 8. It offered to check Monday instead, but no booking was completed before the caller ended the call.
+     Why not completed: No tee time was available for the requested date and time, so the booking could not be completed.
+
+2. Transfer Issue – 23
    - Call ID: 019e80a1-7237-7000-9f19-7b8291552f50
      What happened: The assistant greeted Deb and asked when she wanted to play, but she did not request a tee time. Instead, she said she needed to talk to somebody because she was out of power on her cart, and the assistant forwarded the call to the golf course.
      Why not completed: The booking was not completed because the call was transferred to the pro shop before any tee time details, availability, pricing, or confirmation could be handled.
@@ -56,27 +61,6 @@ Why bookings were not completed:
    - Call ID: 019e80aa-af61-7556-aef5-99a6f37aa417
      What happened: The assistant greeted the golfer and asked when they would like to play, but the golfer did not provide any tee time details such as date, time, player count, holes, or player type. Instead, the golfer asked to be hurried to the clubhouse, and the assistant immediately forwarded the call to the pro shop/clubhouse without discussing availability, alternatives, price, payment, or confirmation details.
      Why not completed: The booking was not completed because the call was transferred to the clubhouse before any tee time request or booking details could be gathered.
-
-2. Customer Abandoned – 1
-   - Call ID: 019e80a5-1d58-7224-bcf4-0ef582cb2640
-     What happened: The assistant opened by asking when the golfer wanted to play, but the golfer did not provide a date, time, player count, holes, or player type. Instead, the golfer said they needed the golf clubhouse and called the interaction pathetic, then ended the call. No availability, alternatives, price, payment, or confirmation details were discussed.
-     Why not completed: The booking was not completed because the customer abandoned the call before giving any tee time details or continuing the booking process.
-
-Repeated Issues:
-- Transfer Issue – 8 calls
-
-Course: Bella Vista Golf Course
-Category: SCO
-
-Total Calls: 5
-Successful Bookings: 0
-Booking Not Completed: 3
-Unclear Calls: 2
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 3
    - Call ID: 019e809c-75d0-7bb2-82f4-82644c89e111
      What happened: The caller said he needed to cancel a reservation for tomorrow at 12:30 PM and explained that his grandson had broken his elbow and needed surgery, so they would not be able to come to the course. The assistant checked for an active booking but did not find one for that time, then offered to connect him to the pro shop so they could access all reservation records and handle the cancellation. The caller agreed to the transfer, but the call ended while the assistant was forwarding him, so no cancellation or booking-related confirmation was completed in the transcript.
      Why not completed: The request was handed off to the pro shop, but the transfer was not completed in the transcript.
@@ -86,71 +70,18 @@ Why bookings were not completed:
    - Call ID: 019e80bf-af71-7000-85d4-1214f786fc26
      What happened: The caller first said they wanted to cancel a tee time, not book one. The assistant asked for the date, and the caller said June 1. After checking, the system found no active booking for that date and offered to transfer the caller to the pro shop for help. The caller agreed, and the call was forwarded instead of resulting in a completed booking or cancellation in the transcript.
      Why not completed: The booking was not completed because the assistant transferred the caller to the pro shop after failing to find an active reservation in the system.
-
-Repeated Issues:
-- Transfer Issue – 3 calls
-
-Course: Elkhorn Ridge Golf Club
-Category: SCO
-
-Total Calls: 5
-Successful Bookings: 2
-Booking Not Completed: 3
-Unclear Calls: 0
-Conversion: 40.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 2
    - Call ID: 019e809c-23f5-7000-81f0-30db1f1cf26c
      What happened: The caller did not request a new tee time booking; instead, he asked to cancel a tee time for tomorrow. The system checked for active bookings under his name and then under the name Greg Crow, but found none in either case. Since the reservation could not be located in the system, the AI offered to transfer him to the pro shop for further help, but the call ended before any transfer or cancellation was completed.
      Why not completed: The booking was not completed because the reservation could not be found and the call ended before the pro shop transfer or any cancellation could be completed.
    - Call ID: 019e80b3-e8b5-7000-8598-8f05c9a030f9
      What happened: The caller was asked if they wanted to look at tee time options for next week for 3 players, but the conversation became unclear when the golfer said they did not want the options shown and mentioned times like 9:20 and 09:30. The assistant could not confirm the requested date, exact time, or whether the golfer wanted to proceed, so the call was forwarded to the pro shop instead of completing a booking.
      Why not completed: The booking was not completed because the call was transferred to the pro shop before a tee time could be confirmed.
-
-2. Information Only – 1
-   - Call ID: 019e80c5-b36f-7000-83aa-8810ad69f4ad
-     What happened: The caller did not request a tee time booking. Instead, they asked about the price of a large bucket of balls and whether the range was open during business hours. The assistant answered with range practice pricing and hours, and offered to transfer the caller to the pro shop for exact bucket pricing. The caller declined the transfer and ended the conversation without any tee time details, availability check, pricing confirmation for a booking, payment, or booking confirmation.
-     Why not completed: The call was informational only and no tee time booking was requested or pursued.
-
-Repeated Issues:
-- Transfer Issue – 2 calls
-
-Course: Foxfire Golf at Par 4 Resort
-Category: SCO
-
-Total Calls: 3
-Successful Bookings: 1
-Booking Not Completed: 2
-Unclear Calls: 0
-Conversion: 33.3%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 2
    - Call ID: 019e80d0-50eb-7000-8de9-94d868fd3bab
      What happened: The golfer wanted to change an existing tee time for 4 players on Wednesday, June 3 at 09:46 AM. The assistant acknowledged the request, confirmed it was a reschedule request, and offered to transfer the caller to the pro shop to handle the change. The golfer agreed to the transfer, and the call was forwarded, but no new tee time was selected, no price or payment was discussed, and no booking confirmation was completed in the transcript.
      Why not completed: The booking was not completed because the call was transferred to the pro shop for rescheduling and ended before any new tee time, pricing, payment, or confirmation could be finalized.
    - Call ID: 019e80d2-12d2-7000-8310-637130c90101
      What happened: The golfer was already associated with a tee time for Wednesday morning at 09:40 for 4 players, but he asked to change the time. The assistant clarified whether he wanted to cancel or reschedule, and he chose to reschedule to a different time. The assistant then offered to transfer him to the pro shop to handle the rescheduling and the golfer agreed, but the transcript ends while the call is being forwarded and no new tee time, price, payment, or confirmation details were completed.
      Why not completed: The booking was not completed because the call was transferred to the pro shop for rescheduling and no final booking confirmation occurred in the transcript.
-
-Repeated Issues:
-- Transfer Issue – 2 calls
-
-Course: The Lakes Course
-Category: SCO
-
-Total Calls: 3
-Successful Bookings: 0
-Booking Not Completed: 3
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 3
    - Call ID: 019e808e-6fe4-7000-81b8-0ca97d5fe84e
      What happened: The golfer asked for a tee time, and the assistant began the booking flow by asking what day they wanted to play. The golfer then requested a live person, and the assistant forwarded the call to the Lakes Course pro shop instead of continuing the booking. No date, time, player count, holes, player type, availability, alternatives, price, payment, or confirmation details were completed in the transcript.
      Why not completed: The booking was not completed because the call was transferred to the pro shop after the golfer asked for a live person.
@@ -160,143 +91,12 @@ Why bookings were not completed:
    - Call ID: 019e80b0-b082-7000-b592-566e6d430ac1
      What happened: The assistant asked whether the caller wanted information or to book a tee time for next week, but the caller instead asked for extension 2400 and then said "The grill." The assistant forwarded the call to the Lakes Grill at the Lakes Course, Genoa, so no tee time details were collected or offered, and no booking was made.
      Why not completed: The call was transferred to the grill instead of continuing the tee-time booking process.
-
-Repeated Issues:
-- Transfer Issue – 3 calls
-
-Course: The Divide
-Category: SCO
-
-Total Calls: 2
-Successful Bookings: 2
-Booking Not Completed: 0
-Unclear Calls: 0
-Conversion: 100.0%
-
-Why bookings were not completed:
-
-None
-
-Repeated Issues:
-- None
-
-Course: Avondale Golf Club
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 1
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 1
    - Call ID: 019e80ab-abde-7eef-97d3-9621e636d34f
      What happened: The assistant greeted Carrie and offered to help book a tee time for next week or provide course information, but the golfer immediately said she wanted to talk to Quinn instead. The assistant said it was forwarding the call to phone inquiries for specific departments and asked her to stay on the line. No date, time, player count, holes, player type, availability, alternatives, price, payment, or confirmation details were discussed, and no booking was completed.
      Why not completed: The booking was not completed because the caller requested a transfer to Quinn instead of continuing the tee time booking.
-
-Repeated Issues:
-- None
-
-Course: Lee Park Golf Course
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 1
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 1
    - Call ID: 019e80cf-1b7d-7556-afae-6f2fa57c1d3d
      What happened: The golfer asked to sign up for Thursday night league, and the assistant found that the ladies league meets Thursday at 5:45 PM and that membership is not required. Instead of completing a tee time booking, the assistant told the golfer to contact the pro shop directly at 605-626-7092 and offered to transfer the call. The golfer agreed to the transfer, and the assistant forwarded the call, but there is no evidence in the transcript that the pro shop completed the registration or that a booking was confirmed.
      Why not completed: The booking was not completed because the call was transferred to the pro shop and no confirmed registration or booking appears in the transcript.
-
-Repeated Issues:
-- None
-
-Course: Meramec Lakes Golf Course
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 1
-Booking Not Completed: 0
-Unclear Calls: 0
-Conversion: 100.0%
-
-Why bookings were not completed:
-
-None
-
-Repeated Issues:
-- None
-
-Course: North Palm Beach Country Club
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 1
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Tee Time Unavailable – 1
-   - Call ID: 019e80b5-16ea-7000-859a-cbecfaf89e64
-     What happened: The golfer asked for Sunday, June 7 for 4 players after 2 PM, 18 holes. The AI checked availability and found no tee times because the course was closed for aeration from May 26 through June 7, reopening Monday, June 8. It offered to check Monday instead, but no booking was completed before the caller ended the call.
-     Why not completed: No tee time was available for the requested date and time, so the booking could not be completed.
-
-Repeated Issues:
-- None
-
-Course: South Padre Island Golf Club
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 0
-Unclear Calls: 1
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-None
-
-Repeated Issues:
-- None
-
-Course: Waterford Golf Club
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 1
-Booking Not Completed: 0
-Unclear Calls: 0
-Conversion: 100.0%
-
-Why bookings were not completed:
-
-None
-
-Repeated Issues:
-- None
-
-Course: Links Ridge Golf Club
-Category: V1
-
-Total Calls: 5
-Successful Bookings: 1
-Booking Not Completed: 4
-Unclear Calls: 0
-Conversion: 20.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 3
    - Call ID: 019e8097-18de-7000-b51f-f0390e9c3d31
      What happened: The golfer asked to cancel a tee time for June 1 at 1:12 PM. The assistant could not find that reservation under the golfer's name, only a different active booking for Wednesday, June 3 at 12:56 PM for 4 players and 18 holes, pay at the counter. The golfer said that June 1 reservation was under the name Pat Welch, and after the assistant still could not locate it, the golfer agreed to be connected to the pro shop. The call was then forwarded, so no cancellation or new booking was completed in the conversation.
      Why not completed: The booking was not completed because the call was transferred to the pro shop before the reservation could be resolved.
@@ -307,61 +107,24 @@ Why bookings were not completed:
      What happened: The golfer was already booked for Monday, June 1 at 7:12 AM for 2 players. The caller first said they would not be attending, then asked to cancel the tee time. The assistant said the cancellation could not be completed because it was within the 24-hour cancellation window and offered to transfer the caller to the pro shop. The golfer agreed, and the call was forwarded, but no cancellation or new booking was completed in the transcript.
      Why not completed: The booking was not completed because the assistant could not process the cancellation and had to transfer the caller to the pro shop.
 
-2. Customer Abandoned – 1
+3. Customer Abandoned – 2
+   - Call ID: 019e80a5-1d58-7224-bcf4-0ef582cb2640
+     What happened: The assistant opened by asking when the golfer wanted to play, but the golfer did not provide a date, time, player count, holes, or player type. Instead, the golfer said they needed the golf clubhouse and called the interaction pathetic, then ended the call. No availability, alternatives, price, payment, or confirmation details were discussed.
+     Why not completed: The booking was not completed because the customer abandoned the call before giving any tee time details or continuing the booking process.
    - Call ID: 019e80c9-78b5-7000-8db8-fd15dba50f8a
      What happened: The AI greeted TJ and referenced an existing tee time for Monday, June 1 at 07:12 AM for 2 players, asking for attendance confirmation. The customer did not respond with a confirmation, request a change, or any booking details before ending the call.
      Why not completed: The customer ended the call before confirming the tee time or providing any further booking details.
 
-Repeated Issues:
-- Transfer Issue – 3 calls
+4. Information Only – 1
+   - Call ID: 019e80c5-b36f-7000-83aa-8810ad69f4ad
+     What happened: The caller did not request a tee time booking. Instead, they asked about the price of a large bucket of balls and whether the range was open during business hours. The assistant answered with range practice pricing and hours, and offered to transfer the caller to the pro shop for exact bucket pricing. The caller declined the transfer and ended the conversation without any tee time details, availability check, pricing confirmation for a booking, payment, or booking confirmation.
+     Why not completed: The call was informational only and no tee time booking was requested or pursued.
 
-Course: Foxfire Golf at Parfour Resort
-Category: V1
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 1
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Other – 1
+5. Other – 1
    - Call ID: 019e8097-88c5-7000-b520-cfb69e474815
      What happened: The golfer requested a tee time for Wednesday, June 3 for 4 players, 18 holes, public rate. The AI offered 09:39AM and 09:46AM after checking availability, quoted $61.61 per player for a total of $246.44, collected the name Michael Johnson, confirmed payment would be made at the pro shop, and then secured and confirmed the 09:46AM tee time. A confirmation text was promised.
      Why not completed: The booking was cancelled.
 
 Repeated Issues:
-- None
-
-Course: Muskoka Highlands Golf Link
-Category: V1
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 0
-Unclear Calls: 1
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-None
-
-Repeated Issues:
-- None
-
-Course: Unknown Course
-Category: V1
-
-Total Calls: 2
-Successful Bookings: 0
-Booking Not Completed: 0
-Unclear Calls: 2
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-None
-
-Repeated Issues:
-- None
+- Transfer Issue – 23 calls
+- Customer Abandoned – 2 calls

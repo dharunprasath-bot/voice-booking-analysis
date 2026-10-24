@@ -1,0 +1,492 @@
+TABLE-WISE FLOW VALIDATION
+
+Generated: 2026-10-24T16:31:55.251475+00:00
+Range: 2024-04-24 through 2026-10-23 (America/New_York calendar days)
+
+CONVERSATIONS
+Rows read: 364,216
+Distinct conversation IDs: 364,216
+Duplicate conversation IDs: 0
+Distinct call IDs: 364,216
+Duplicate call IDs: 0
+Blank call IDs: 0
+
+CLASSIFICATION (configured phone, then a conversation ID only when that phone is not configured)
+A phone with one configured course is used when the conversation ID is empty or names that same course.
+A disagreeing ID, or a phone configured for more than one course, is reported and not assigned.
+SCO: 242,576 calls | booked 9,158 | saved reason 167,100 | reason not available 66,318 | with transcript 234,525
+MCO: 48,066 calls | booked 1,634 | saved reason 34,161 | reason not available 12,271 | with transcript 46,289
+Unclassified: 73,574 calls | booked 242 | saved reason 51,860 | reason not available 21,472 | with transcript 70,406
+
+OUTCOMES
+Total calls: 364,216
+Calls with transcript: 351,220
+Calls without transcript: 12,996
+Booked (Voice session, completed/confirmed/booked): 11,034
+Qualifying booking rows behind those calls: 11,449
+Booked calls with more than one qualifying row (counted once): 366
+Booked calls whose booking is marked is_test_booking: 0
+Not booked, saved failure reason: 253,121
+Not booked or not verified, reason not available: 100,061
+Calls with any session row: 15,677
+Calls with a session row that does not qualify: 4,643
+
+BOOKING TABLE
+Session-matched booking rows by channel and status:
+  voice    blocked    rows 5 sessions 4
+  voice    booked     rows 4,579 sessions 4,400
+  voice    cancelled  rows 4,944 sessions 4,622
+  voice    completed  rows 6,176 sessions 6,062
+  voice    confirmed  rows 694 sessions 663
+  voice    expired    rows 242 sessions 231
+Qualifying Voice rows in bookings (all dates): 47,620
+  with a blank booking_session_id: 33,825
+  whose session matches a call in range: 11,449
+  marked is_test_booking: 1
+  with deleted_at set: 0
+Calls linked by conversations.booking_id to a qualifying Voice booking but with no qualifying session: 4,049
+  of those, with a saved failure reason: 531
+Saved failure reasons on calls that are booked by session (not shown as reasons): 1,593
+
+SAVED FAILURE REASONS (reports/courses-*.txt, read only)
+Report files: 896
+Call ID blocks: 254,714
+Unique Call IDs: 254,714
+Call IDs saved more than once: 0
+Call IDs saved with different text: 0
+Saved blocks with no Why not completed text: 0
+Saved Call IDs found in range: 254,714
+Saved Call IDs with no conversation in range: 0
+
+OLD REPORT HEADERS COMPARED WITH THIS FLOW
+Saved headers: total 364,216 | successful 49,452 | not completed 254,714 | unclear 60,050
+This flow: total 364,216 | booked 11,034 | saved reason 253,121 | reason not available 100,061
+Saved successes came from the AI transcript reading and from conversations.booking_id rows with
+status booked. This flow counts only Voice bookings matched by booking_session_id = call_id.
+
+ASSIGNMENT
+Calls filled in from the configured phone (no conversation ID): 281,583
+Calls whose conversation ID agrees with the configured phone: 9,026
+Calls kept on their conversation ID because the phone is not configured: 33
+Calls not assigned because the conversation ID disagrees with the phone: 0
+Calls not assigned because the phone belongs to more than one course: 0
+Calls not assigned because the phone is blank: 467
+Calls not assigned because the phone is not in voice_numbers: 73,107
+SCO courses with calls: 188
+MCO organizations with calls: 28
+Configured courses with no calls in range: 92
+  MCO:11 LS Test Facility
+  MCO:138 Trump International Golf Club
+  MCO:212 Top Tracer Range
+  MCO:223 Birck Boilermaker Golf Course
+  MCO:340 Spy Ring Golf
+  MCO:341 Pine Hills Golf
+  SCO:16 Desert Gold
+  SCO:17 Park Meadows
+  SCO:35 The Lakes Course
+  SCO:36 The Forest Course
+  SCO:40 The Links
+  SCO:41 Pinemoor Course
+  SCO:42 The Hills Course
+  SCO:43 The Palms Course
+  SCO:44 Long Marsh Course
+  SCO:56 Championship Course
+  SCO:62 The Potato Par Three
+  SCO:82 Pines Willows
+  SCO:83 Willows Lakes
+  SCO:84 Lakes Pines
+  SCO:89 The Championship Course
+  SCO:90 The Speedway
+  SCO:96 Thompson
+  SCO:97 Watson
+  SCO:99 UNM North Course
+  SCO:100 UNM Championship Course
+  SCO:105 Championship Courses
+  SCO:106 North Course
+  SCO:113 Championship Golf Course
+  SCO:120 Emerald Course
+  SCO:121 Gold Course
+  SCO:122 Blue Course
+  SCO:162 East Course
+  SCO:163 West Course
+  SCO:182 Top Tracer Range
+  SCO:184 The North Course
+  SCO:185 The South Course
+  SCO:186 Eagles Glenn Golf Course
+  SCO:187 Mill River Resort
+  SCO:190 Ackerman-Allen
+  SCO:191 Kampen-Cosler
+  SCO:192 Eldorado Golf Club
+  SCO:195 Allianz Course
+  SCO:196 Allianz Bank Course
+  SCO:199 Saxon Golf Course
+  SCO:201 Petitcodiac Valley Golf & Country Club
+  SCO:202 Boulder Oaks Golf Club
+  SCO:204 Forest Hills Golf Course
+  SCO:206 The Dunes at Maui Lani Golf Course
+  SCO:210 Northdale Golf Club
+  SCO:213 Winchester Golf Club
+  SCO:214 Big Stone Golf Course
+  SCO:218 Crestbrook Park Golf Course
+  SCO:220 Fairlawn Golf Course
+  SCO:225 Hyde Park Golf Club
+  SCO:226 Kirkland Lake Golf Course
+  SCO:227 Scenic Golf & Country Club
+  SCO:231 Coachman's Golf Resort
+  SCO:232 Rayburn Resort and Marina
+  SCO:233 Liberty Municipal Golf Course
+  SCO:251 Stonehenge Golf Club
+  SCO:252 Makaha Valley Country Club
+  SCO:255 Carlowden Country Club
+  SCO:256 Maxwelton Braes Golf Course
+  SCO:257 Willow Tree Golf Course
+  SCO:259 Hidden Valley Golf Links
+  SCO:268 Sweetwater Country Club
+  SCO:269 Club de Golf Le Marthelinois
+  SCO:276 Little Mammoth
+  SCO:277 Park Mammoth
+  SCO:278 Great Gorge - Red
+  SCO:280 Great Gorge - White
+  SCO:281 Great Gorge - Blue
+  SCO:282 RedCrest
+  SCO:283 East Wing
+  SCO:284 West Wing
+  SCO:285 Kettle Creek
+  SCO:287 Mon Valley Country Club
+  SCO:288 Olton Country Club
+  SCO:289 The Mines Golf Club
+  SCO:290 Longleaf Golf Club
+  SCO:292 Prescott Golf Club
+  SCO:293 Southside Golf Course
+  SCO:295 Warmouth Sands Golf Club
+  SCO:296 The Foothills Golf Club
+  SCO:299 Fennwood Hills Country Club
+  SCO:300 Rio Bravo Country Club
+  SCO:304 Woodland Hills Golf Course
+  SCO:305 Citrus National Golf Club
+  SCO:306 Skybrook Golf Club
+  SCO:307 Tierra Oaks Golf Club
+  SCO:308 Grape Ranch Golf Club
+
+PHONE MAPPING (voice_channel_configurations.id -> voice_numbers.voice_channel_config_id -> conversations)
+Configurations: 323
+Configurations without a phone: 43
+voice_numbers rows whose configuration is missing: 0
+Phones shared by more than one configuration: 0
+Configured phones with no calls in range: 62
+Conversation phones not in voice_numbers: 166
+  calls on those phones: 73,140
+Calls with a blank phone: 467
+MCO calls by phone check: match 48,065 | phone of another course 0 | unconfigured phone 1 | blank 0
+SCO calls by phone check: match 242,544 | phone of another course 0 | unconfigured phone 32 | blank 0
+
+Courses and organizations with more than one phone:
+  MCO:284 Falmouth Country Club: 15087156418 (0), 17744030070 (1)
+  SCO:1 Highland Creek Golf Club: 14156293719 (1), 17044862984 (28,096)
+  SCO:146 Sonora Dunes Golf Course: 12364563553 (5), 17785476632 (0)
+  SCO:168 Kapalua Golf: 18085560501 (322), 18088556182 (0)
+  SCO:170 Greenwood Golf Club: 17823582783 (6), 19025101923 (0)
+  SCO:181 River Club: 18434286771 (3,649), 18438002276 (0)
+  SCO:19 Heritage Hills Golf Course: 17172970908 (0), 17174738333 (3), 17174831200 (0), 17176106301 (0), 17177229176 (689)
+  SCO:2 Le golf des Lacs: 14509877043 (92), 15074366024 (0), 18782849342 (0)
+  SCO:4 Gull Rock National Golf Club: 12072557904 (0), 12075062552 (0), 12076147435 (30)
+  SCO:7 Oasis at Fire Rock Golf Club: 15126016915 (0), 15127788834 (62)
+
+Configurations without a phone:
+  config 16 MCO:11 Gull Rock National
+  config 33 SCO:16 Desert Gold
+  config 34 SCO:17 Park Meadows
+  config 64 SCO:44 Long Marsh Course
+  config 65 SCO:43 The Palms Course
+  config 66 SCO:42 The Hills Course
+  config 67 SCO:41 Pinemoor Course
+  config 68 SCO:40 The Links
+  config 69 SCO:35 The Lakes Course
+  config 70 SCO:36 The Forest Course
+  config 76 SCO:56 Championship Course
+  config 77 SCO:62 The Potato Par Three
+  config 119 SCO:82 Pines Willows
+  config 123 SCO:83 Willows Lakes
+  config 124 SCO:84 Lakes Pines
+  config 134 SCO:113 Championship
+  config 135 SCO:90 The Speedway
+  config 172 MCO:138 Championship
+  config 175 SCO:97 Watson
+  config 176 SCO:96 Thompson
+  config 177 SCO:162 East Course
+  config 178 SCO:163 West Course
+  config 186 SCO:106 North Course
+  config 187 SCO:120 Emerald Course
+  config 188 SCO:121 Gold Course
+  config 189 SCO:122 Blue Course
+  config 198 MCO:212 
+  config 200 SCO:105 Championship Courses
+  config 201 SCO:184 The North Course
+  config 227 SCO:196 Allianz Bank Course
+  config 228 SCO:195 Allianz Course
+  config 238 SCO:191 Kampen-Cosler
+  config 239 SCO:190 Ackerman-Allen
+  config 240 SCO:185 The South Course
+  config 310 SCO:284 West Wing
+  config 311 SCO:282 RedCrest
+  config 312 SCO:285 Kettle Creek
+  config 313 SCO:283 East Wing
+  config 314 SCO:277 Park Mammoth
+  config 315 SCO:276 Little Mammoth
+  config 322 SCO:281 Great Gorge - Blue
+  config 323 SCO:280 Great Gorge - White
+  config 324 SCO:278 Great Gorge - Red
+
+Configured phones with no calls in range:
+  12042597790 config 304 SCO:293 Southside Golf Course
+  12072557904 config 13 SCO:4 Gull Rock National
+  12075062552 config 9 SCO:4 Gull Rock National
+  12076147430 config 241 SCO:220 Fairlawn Golf Course
+  12255451068 config 316 SCO:299 Fennwood Hills Country Club
+  12513120181 config 301 SCO:290 Longleaf Golf Club
+  13157848500 config 276 SCO:255 Carlowden Country Club
+  13527605624 config 321 SCO:305 Citrus National Golf Club
+  13652428968 config 208 SCO:192 Eldorado Golf Club
+  13656520224 config 272 SCO:251 Stonehenge Golf Club
+  14028829365 config 320 SCO:304 Woodland Hills Golf Course
+  14092322501 config 253 SCO:232 Rayburn Resort and Marina
+  14172613327 config 280 SCO:259 Hidden Valley Golf Links
+  14808960768 config 307 SCO:296 The Foothills Golf Club
+  15054517268 config 109 SCO:100 UNM Championship Course
+  15055787175 config 108 SCO:99 UNM North Course
+  15074366024 config 3 SCO:2 Le des Lacs
+  15087156418 config 270 MCO:284 The Osprey Course
+  15126016915 config 10 SCO:7 Oasis at Fire Rock
+  15198008946 config 278 SCO:257 Willow Tree Golf Course
+  15304353123 config 326 SCO:307 Tierra Oaks Golf Club
+  15308178075 config 327 SCO:308 Grape Ranch Golf Club
+  16087405820 config 219 SCO:204 Forest Hills Golf Course
+  16087407411 config 252 SCO:231 Coachman's Golf Resort
+  16137068934 config 303 SCO:292 Prescott Golf Club
+  16162766009 config 300 SCO:289 The Mines Golf Club
+  16312501831 config 319 MCO:341 Pine Hills Golf
+  16319001865 config 318 MCO:340 Spy Ring Golf
+  16613381080 config 317 SCO:300 Rio Bravo Country Club
+  17043680148 config 325 SCO:306 Skybrook Golf Club
+  17059800810 config 247 SCO:226 Kirkland Lake Golf Course
+  17158000675 config 232 SCO:214 Big Stone Golf Course
+  17172970908 config 27 SCO:19 Heritage Hills
+  17174831200 config 26 SCO:19 Heritage Hills
+  17176106301 config 30 SCO:19 Heritage Hills
+  17242818447 config 214 SCO:199 Saxon Golf Course
+  17243708105 config 298 SCO:287 Mon Valley Country Club
+  17606579730 config 217 SCO:202 Boulder Oaks Golf Club
+  17653501881 config 206 MCO:223 Birck Boilermaker Golf Course
+  17785476632 config 260 SCO:146 Sonora Dunes Golf Course
+  17823584630 config 216 SCO:201 Petitcodiac Valley Golf & Country Club
+  18038891357 config 289 SCO:268 Sweetwater Country Club
+  18066082433 config 299 SCO:288 Olton Country Club
+  18084440231 config 222 SCO:206 The Dunes at Maui Lani Golf Course
+  18084440590 config 273 SCO:252 Makaha Valley Country Club
+  18088556182 config 173 SCO:168 Kapalua
+  18137392751 config 226 SCO:210 Northdale Golf Club
+  18156498040 config 221 SCO:182 Top Tracer Range
+  18194105185 config 290 SCO:269 Club de Golf Le Marthelinois
+  18438002276 config 196 SCO:181 River Club
+  18443943555 config 203 SCO:187 Mill River Resort
+  18604779419 config 236 SCO:218 Crestbrook Park Golf Course
+  18633443290 config 133 SCO:89 The Championship Course
+  18664981152 config 202 SCO:186 Eagles Glenn Golf Course
+  18782849342 config 4 SCO:2 Le des Lacs
+  19025101923 config 179 SCO:170 Greenwood
+  19047471626 config 246 SCO:225 Hyde Park Golf Club
+  19053675640 config 231 SCO:213 Winchester Golf Club
+  19127411391 config 306 SCO:295 Warmouth Sands Golf Club
+  19203251930 config 277 SCO:256 Maxwelton Braes Golf Course
+  19363050022 config 254 SCO:233 Liberty Municipal Golf Course
+  19892082543 config 248 SCO:227 Scenic Golf & Country Club
+
+Conversation phones not in voice_numbers (phone, calls):
+  15873305724 16,122
+  17752108419 11,791
+  12077091984 4,711
+  12267813479 4,369
+  19208802747 4,363
+  13139232094 4,272
+  13156599441 3,560
+  15817053129 3,313
+  17027667925 3,049
+  18635631425 2,701
+  17154895482 1,965
+  18157064941 1,762
+  15177362986 1,760
+  17752277894 1,554
+  14179002753 1,251
+  15305077746 1,175
+  17787215046 939
+  16318014158 681
+  12525821091 444
+  15814365076 311
+  16316346331 248
+  16318182084 233
+  12494491563 181
+  19802941393 153
+  16026989472 140
+  15617819292 129
+  19803388942 90
+  18582803028 86
+  16025330939 67
+  12626834047 61
+  15054964317 52
+  14027884073 48
+  18435959434 48
+  18138088776 47
+  12623846770 46
+  15059430225 46
+  15818938774 45
+  19804778047 44
+  19415410422 43
+  12624478383 37
+  16194898050 36
+  17168045007 33
+  18432786144 33
+  16025330983 32
+  17753063657 32
+  12624040147 31
+  15818074437 30
+  14503288357 29
+  18087880869 26
+  13072418507 25
+  17058052061 25
+  18438838490 24
+  19195988686 24
+  19417320163 23
+  19803178692 23
+  15147876229 22
+  16364268183 21
+  18086466330 21
+  14012519363 20
+  16303898208 20
+  17044197555 20
+  18456683944 20
+  18037706344 19
+  14502345288 17
+  15417878489 17
+  16025985895 17
+  16092725322 17
+  18198057706 17
+  18543333140 17
+  16312122944 16
+  18432378755 16
+  19372008689 16
+  19412298942 16
+  15416581585 15
+  18439368747 15
+  19035371130 15
+  16028479420 13
+  16303898069 13
+  18432374900 13
+  14709745359 12
+  15199301403 12
+  16137069139 12
+  15717730643 11
+  17048759000 11
+  18019217064 11
+  19166215667 11
+  17046286438 10
+  17823584778 10
+  19414771255 10
+  17043680644 9
+  18038053674 9
+  19804529490 9
+  12087020332 8
+  16625733313 8
+  17045037529 8
+  12289011222 7
+  13603258207 7
+  14407659312 6
+  15707325512 6
+  16462051779 6
+  18033240300 6
+  18333352427 6
+  19802941215 6
+  14062154851 5
+  14079744537 5
+  15183172757 5
+  15676218391 5
+  17042282604 5
+  17142783924 5
+  17603889014 5
+  18037552000 5
+  18139206681 5
+  18283731616 5
+  19206721781 5
+  19283956676 5
+  19562641376 5
+  13433140603 4
+  16054050501 4
+  17043685427 4
+  17174829283 4
+  13433415928 3
+  14026244185 3
+  16575305258 3
+  17028321746 3
+  18433053873 3
+  18548884426 3
+  19419252755 3
+  13072490075 2
+  13137109895 2
+  15055609465 2
+  16028479410 2
+  16083052986 2
+  16574787127 2
+  16575305696 2
+  17603041814 2
+  18156478070 2
+  19097376123 2
+  19416371232 2
+  19705798851 2
+  12187180300 1
+  12705048336 1
+  13058506372 1
+  13854696916 1
+  14692381284 1
+  14695770957 1
+  14849788301 1
+  15704056773 1
+  15704723590 1
+  16053160148 1
+  16055020125 1
+  16363031742 1
+  16573872136 1
+  16672205708 1
+  16672207906 1
+  16672976748 1
+  17059986321 1
+  17162746897 1
+  17193023174 1
+  17198731997 1
+  17752450560 1
+  18433141679 1
+  18437381506 1
+  19412131056 1
+  19705783870 1
+  19805981491 1
+  19842667959 1
+
+SCO/MCO calls whose phone is not that course's configured phone:
+  SCO:215 Bear Creek Golf Club | phone 18435959434 | unmapped | phone owner none | 13 calls
+  SCO:243 Deer Run Golf Club | phone 19035371130 | unmapped | phone owner none | 11 calls
+  SCO:262 Meadow Lake Golf Course | phone 14062154851 | unmapped | phone owner none | 5 calls
+  SCO:265 Walsh Golf Center | phone 16083052986 | unmapped | phone owner none | 2 calls
+  SCO:258 Rio Grande Club & Resort | phone 17193023174 | unmapped | phone owner none | 1 calls
+  MCO:312 Park Mammoth Golf Course | phone 12705048336 | unmapped | phone owner none | 1 calls
+
+COURSES
+SCO entries: 274
+MCO entries: 34
+Duplicate course keys: 0
+
+CHECKS
+groupTotalsMatchOverall: PASS
+outcomesAddUp: PASS
+kindsAddUp: PASS
+assignmentAddsUp: PASS
+uniqueConversations: PASS
+uniqueCallIds: PASS
+noSharedPhones: PASS

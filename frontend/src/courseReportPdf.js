@@ -100,8 +100,8 @@ export function createCourseReportPdf({ course, summary, reasons, reasonFilter }
   const metrics = [
     ["Total Calls", summary?.totalCalls ?? 0],
     ["Successful Bookings", summary?.successful ?? 0],
-    ["Booking Not Completed", summary?.notCompleted ?? 0],
-    ["Unclear", summary?.unclear ?? 0],
+    ["Not Booked (Saved Reason)", summary?.notCompleted ?? 0],
+    ["Reason Not Available", summary?.unclear ?? 0],
     ["Conversion %", summary?.conversion ?? "0.0%"],
   ]
   const columnWidth = CONTENT_WIDTH / metrics.length

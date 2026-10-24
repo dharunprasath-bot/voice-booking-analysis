@@ -6,51 +6,40 @@ FAILURE REASONS
 
 Tee Time Unavailable: 0
 Customer Rejected Alternative Time: 0
-Date/Time Issue: 1
+Date/Time Issue: 0
 Player Count Issue: 0
 AI Misunderstanding: 0
 Voice Recognition Issue: 0
 Call Disconnected: 0
 Technical/API Issue: 0
 Payment Issue: 0
-Transfer Issue: 10
+Transfer Issue: 0
 Customer Changed Mind: 0
 Customer Abandoned: 0
 Information Only: 0
-Other: 2
+Other: 0
 Unclear: 0
 
-Course: Rotonda Golf and Country Club
-Category: MCO
+UNCLASSIFIED CALLS
 
-Total Calls: 3
-Successful Bookings: 2
-Booking Not Completed: 1
-Unclear Calls: 0
-Conversion: 66.7%
+These calls are not an SCO course, an MCO course, or a V1 course.
+A call is unclassified when the conversation has no Golf Course ID and no Organization ID.
+Unclassified calls: 18
+Successful Bookings: 4
+Booking Not Completed: 13
+Unclear Calls: 1
 
 Why bookings were not completed:
 
-1. Transfer Issue – 1
+1. Date/Time Issue – 1
+   - Call ID: 019ca7c3-02ba-7000-831f-25777096631a
+     What happened: The golfer asked for March 11 for 1 player in the afternoon for 18 holes. The system checked availability and said public tee times can only be booked up to 10 days in advance, so March 11 was too far out and the latest available date was Tuesday, March 10. The bot began offering that alternative, but the booking did not continue or get confirmed before the caller ended the call.
+     Why not completed: The booking was not completed because the requested date was outside the bookable window and no confirmed alternative booking was reached.
+
+2. Transfer Issue – 10
    - Call ID: 019ca717-8321-7ffe-9f55-2090dbf63b42
      What happened: The caller was not trying to make a new booking; he was calling to cancel an existing tee time for Sunday, March 1 at 07:58AM for 4 players. The assistant first identified the booking as the Hills Course, then the caller corrected it to the Palms. Because the tee time was within 24 hours, the assistant said cancellation had to be handled by the pro shop and offered to transfer the call. The caller agreed, and the assistant forwarded the call to the Palms pro shop, but no cancellation or new booking was completed in the transcript.
      Why not completed: The request was handed off to the pro shop for a within-24-hours cancellation, so the booking/cancellation was not completed in the call.
-
-Repeated Issues:
-- None
-
-Course: Cottonwood Golf Club
-Category: SCO
-
-Total Calls: 6
-Successful Bookings: 1
-Booking Not Completed: 5
-Unclear Calls: 0
-Conversion: 16.7%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 5
    - Call ID: 019ca6bc-31f8-7ff9-a05a-8c28079aaf9c
      What happened: The golfer asked about a tee time for tomorrow for a foursome and wanted to cancel 2 players. The assistant checked for an active booking but could not find one in the system, then offered to connect the golfer to the pro shop for help adjusting the reservation. The golfer agreed, and the call was forwarded instead of completing any booking or change in the chat.
      Why not completed: The booking was not completed because the assistant had to transfer the caller to the pro shop after failing to find the reservation in the system.
@@ -66,95 +55,27 @@ Why bookings were not completed:
    - Call ID: 019ca718-e0bc-7880-a896-5050d235229c
      What happened: The golfer said he needed to change a reservation for a last-minute tee time tomorrow. The assistant checked for active bookings and found none in the system for tomorrow, then offered to connect him with the pro shop so they could look into it. The golfer agreed, and the assistant forwarded the call, but no booking or change was completed in the transcript.
      Why not completed: The call was transferred to the pro shop before any reservation change or new booking was completed.
-
-Repeated Issues:
-- Transfer Issue – 5 calls
-
-Course: The Course at Pillow Springs
-Category: SCO
-
-Total Calls: 5
-Successful Bookings: 1
-Booking Not Completed: 3
-Unclear Calls: 1
-Conversion: 20.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 2
    - Call ID: 019ca6d1-1de2-799f-83e6-e48ae190601e
      What happened: The assistant greeted Byron and asked when he wanted to play, but Byron said he had called to leave a voice mail. The assistant then said it was forwarding the call to the course at Pillow Springs, and the conversation ended before any date, time, player count, holes, player type, availability, alternatives, price, payment, or confirmation details were collected.
      Why not completed: The booking was not completed because the call was transferred to the course for voicemail instead of continuing through the tee time booking flow.
    - Call ID: 019ca6d1-d23e-744a-a534-67535260d9c7
      What happened: The assistant opened by asking when Byron wanted to play, but Byron said he wanted to leave a voice mail instead of booking a tee time. The assistant then said it was forwarding the call to the course at Pillow Springs, and the conversation ended before any date, time, player count, holes, player type, availability, alternatives, price, payment, or confirmation details were discussed.
      Why not completed: The booking was not completed because the call was transferred to the pro shop instead of progressing through tee time selection and confirmation.
-
-2. Other – 1
-   - Call ID: 019ca6cc-f6f2-7007-b167-e058956db7ce
-     What happened: The golfer requested tomorrow at 1:30 PM for 2 players, 18 holes. The tee time was available, the rate was quoted at $60.37 per player ($120.73 total) with a half cart included, and the golfer agreed to pay at the course in the pro shop. The booking was then confirmed, with the golfer given the final details and told a text would follow.
-     Why not completed: The booking was cancelled.
-
-Repeated Issues:
-- Transfer Issue – 2 calls
-
-Course: Serenoa
-Category: SCO
-
-Total Calls: 2
-Successful Bookings: 0
-Booking Not Completed: 2
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 1
    - Call ID: 019ca753-f42b-788b-9854-63d97256a657
      What happened: The golfer asked to cancel an existing Sunday, March 1 3:18 PM tee time for 4 players. The system confirmed the booking details, then explained the tee time was inside the 24-hour cancellation window and could not be canceled through the system. It offered to transfer the golfer to the pro shop for help, but the call ended before any transfer or cancellation was completed.
      Why not completed: The cancellation could not be completed in-system because the tee time was inside the 24-hour window and the call ended before a pro shop transfer or resolution occurred.
+   - Call ID: 019ca77a-f757-799f-83fa-f7bf210f8433
+     What happened: The golfer asked to cancel a tee time for Sunday, March 1. The assistant checked for an active booking, did not find one, and offered to transfer the caller to the pro shop for access to all booking records. The golfer agreed, and the call was forwarded instead of resulting in a completed booking or cancellation in the transcript.
+     Why not completed: The booking was not completed because the caller was transferred to the pro shop after no active reservation was found in the system.
 
-2. Other – 1
+3. Other – 2
+   - Call ID: 019ca6cc-f6f2-7007-b167-e058956db7ce
+     What happened: The golfer requested tomorrow at 1:30 PM for 2 players, 18 holes. The tee time was available, the rate was quoted at $60.37 per player ($120.73 total) with a half cart included, and the golfer agreed to pay at the course in the pro shop. The booking was then confirmed, with the golfer given the final details and told a text would follow.
+     Why not completed: The booking was cancelled.
    - Call ID: 019ca6fb-380b-777c-bab7-3c96b6d608f1
      What happened: The golfer requested Tuesday, March 3 at 02:06 PM for 1 player and 18 holes. The system found availability, quoted $69.55 for a single player joining an existing group, confirmed it was the public rate, and explained payment would be made at the pro shop before the round. The golfer said yes twice, and the agent confirmed the tee time was booked and confirmed.
      Why not completed: The booking was cancelled.
 
 Repeated Issues:
-- None
-
-Course: Heritage Harbour
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 1
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Date/Time Issue – 1
-   - Call ID: 019ca7c3-02ba-7000-831f-25777096631a
-     What happened: The golfer asked for March 11 for 1 player in the afternoon for 18 holes. The system checked availability and said public tee times can only be booked up to 10 days in advance, so March 11 was too far out and the latest available date was Tuesday, March 10. The bot began offering that alternative, but the booking did not continue or get confirmed before the caller ended the call.
-     Why not completed: The booking was not completed because the requested date was outside the bookable window and no confirmed alternative booking was reached.
-
-Repeated Issues:
-- None
-
-Course: South Padre Island Golf Club
-Category: SCO
-
-Total Calls: 1
-Successful Bookings: 0
-Booking Not Completed: 1
-Unclear Calls: 0
-Conversion: 0.0%
-
-Why bookings were not completed:
-
-1. Transfer Issue – 1
-   - Call ID: 019ca77a-f757-799f-83fa-f7bf210f8433
-     What happened: The golfer asked to cancel a tee time for Sunday, March 1. The assistant checked for an active booking, did not find one, and offered to transfer the caller to the pro shop for access to all booking records. The golfer agreed, and the call was forwarded instead of resulting in a completed booking or cancellation in the transcript.
-     Why not completed: The booking was not completed because the caller was transferred to the pro shop after no active reservation was found in the system.
-
-Repeated Issues:
-- None
+- Transfer Issue – 10 calls
+- Other – 2 calls

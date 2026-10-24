@@ -58,8 +58,8 @@ export function Charts({ summary, reasonGroups, courses, showConversion = false 
 function OutcomePie({ summary }) {
   const parts = [
     { label: "Successful Bookings", value: summary.successful, color: "#3dd68c" },
-    { label: "Booking Not Completed", value: summary.notCompleted, color: "#f07178" },
-    { label: "Unclear Calls", value: summary.unclear, color: "#e6b325" },
+    { label: "Not Booked (Saved Reason)", value: summary.notCompleted, color: "#f07178" },
+    { label: "Reason Not Available", value: summary.unclear, color: "#e6b325" },
   ]
   const total = parts.reduce((sum, part) => sum + part.value, 0)
   let cursor = 0
@@ -77,7 +77,7 @@ function OutcomePie({ summary }) {
   return (
     <article className="chart" data-chart="outcomes">
       <h3>Call outcomes</h3>
-      <p className="chart-note">Report totals for the courses in this filter.</p>
+      <p className="chart-note">Booked means a Voice booking matched by session with status completed, confirmed, or booked.</p>
       <div className="pie-row">
         <div className="pie" style={{ background: `conic-gradient(${gradient})` }} />
         <ul className="legend">
@@ -99,7 +99,7 @@ function ReasonBars({ reasonGroups }) {
   return (
     <article className="chart" data-chart="reasons">
       <h3>Failure reasons</h3>
-      <p className="chart-note">Failure-reason counts for this filter.</p>
+      <p className="chart-note">Saved failure reasons for calls that were not booked. Calls with no saved reason show as Reason not available.</p>
       {reasonGroups.length === 0 ? <p className="empty">No matching records found.</p> : null}
       <ul className="bars">
         {reasonGroups.map((group) => (

@@ -153,20 +153,26 @@ def _call_word(count: int) -> str:
 
 
 def build_coursewise_report(analyses: list[dict], *, report_date: str) -> str:
-    """One report per course: totals, then each failure reason with its calls."""
-    grouped: dict[tuple[str, str], list[dict]] = {}
+    """One report per SCO or MCO course. Calls with neither ID are not a course."""
+    grouped: dict[tuple, list[dict]] = {}
+    unclassified: list[dict] = []
     for item in analyses:
+        kind = item.get("course_kind") if item.get("course_kind") in ("SCO", "MCO") else ""
+        if not kind:
+            unclassified.append(item)
+            continue
         name = item.get("course_name") or UNKNOWN_COURSE
-        kind = item.get("course_kind") if item.get("course_kind") in ("SCO", "MCO", "V1") else ""
-        grouped.setdefault((kind, name), []).append(item)
+        course_id = item.get("course_id")
+        grouped.setdefault((kind, course_id, name), []).append(item)
 
-    def sort_key(key: tuple[str, str]) -> tuple:
-        kind, name = key
-        return (name == UNKNOWN_COURSE, kind, -len(grouped[key]), name.lower())
+    def sort_key(key: tuple) -> tuple:
+        kind, course_id, name = key
+        return (name == UNKNOWN_COURSE, kind, -len(grouped[key]), name.lower(), course_id or 0)
 
+    classified = [item for item in analyses if item.get("course_kind") in ("SCO", "MCO")]
     day_counts = Counter(
         canonical_failure_reason(item.get("failure_reason"))
-        for item in analyses
+        for item in classified
         if item.get("booking_status") == "Booking Not Completed"
     )
     lines = [
@@ -180,8 +186,8 @@ def build_coursewise_report(analyses: list[dict], *, report_date: str) -> str:
     for reason in FAILURE_REASONS:
         lines.append(f"{reason}: {day_counts.get(reason, 0)}")
     lines.append("")
-    for kind, course_name in sorted(grouped, key=sort_key):
-        calls = grouped[(kind, course_name)]
+    for kind, course_id, course_name in sorted(grouped, key=sort_key):
+        calls = grouped[(kind, course_id, course_name)]
         successful = sum(1 for item in calls if item.get("booking_status") == "Booking Successful")
         unclear = sum(1 for item in calls if item.get("booking_status") == "Unclear")
         not_completed = [
@@ -230,4 +236,43 @@ def build_coursewise_report(analyses: list[dict], *, report_date: str) -> str:
                 count = len(by_reason[reason])
                 lines.append(f"- {reason} – {count} {_call_word(count)}")
         lines.append("")
+    if unclassified:
+        successful = sum(1 for item in unclassified if item.get("booking_status") == "Booking Successful")
+        unclear = sum(1 for item in unclassified if item.get("booking_status") == "Unclear")
+        not_completed = [
+            item for item in unclassified if item.get("booking_status") == "Booking Not Completed"
+        ]
+        lines.extend(
+            [
+                "UNCLASSIFIED CALLS",
+                "",
+                "These calls have no Golf Course ID and no Organization ID.",
+                "They are not an SCO course, an MCO course, or a V1 course.",
+                f"Unclassified calls: {len(unclassified)}",
+                f"Successful Bookings: {successful}",
+                f"Booking Not Completed: {len(not_completed)}",
+                f"Unclear Calls: {unclear}",
+                "",
+                "Why bookings were not completed:",
+                "",
+            ]
+        )
+        by_reason: dict[str, list[dict]] = {}
+        for item in not_completed:
+            reason = canonical_failure_reason(item.get("failure_reason"))
+            by_reason.setdefault(reason, []).append(item)
+        ranked = [reason for reason in FAILURE_REASONS if by_reason.get(reason)]
+        if not ranked:
+            lines.append("None")
+            lines.append("")
+        for index, reason in enumerate(ranked, start=1):
+            group = sorted(by_reason[reason], key=lambda item: str(item.get("created_at") or ""))
+            lines.append(f"{index}. {reason} – {len(group)}")
+            for item in group:
+                happened = item.get("what_happened") or "Not stated"
+                why = item.get("why_not_completed") or "Not stated"
+                lines.append(f"   - Call ID: {item.get('call_id')}")
+                lines.append(f"     What happened: {happened}")
+                lines.append(f"     Why not completed: {why}")
+            lines.append("")
     return "\n".join(lines)

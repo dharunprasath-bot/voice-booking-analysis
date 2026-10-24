@@ -5,7 +5,6 @@ import { downloadCourseReport } from "./courseReportPdf.js"
 import { callText, courseText, filteredText, reasonText, summaryText } from "./copyText.js"
 import {
   aggregateReasons,
-  applyFilters,
   buildFilteredView,
   compareCourseRows,
   compareDays,
@@ -13,27 +12,115 @@ import {
   coursesForDate,
   coursesForDates,
   datesInRange,
-  groupCoursesByName,
   reasonNames,
   summarize,
 } from "./filterReport.js"
-import { parseReport } from "./parseReport.js"
+import { buildFlowReports, callsQuery, phoneRows, REASON_NOT_AVAILABLE, UNCLASSIFIED } from "./flowData.js"
 
 function courseKey(course) {
-  return `${course.date}|${course.kind || ""}|${course.name}`
+  return `${course.date}|${course.key || `${course.kind || ""}:${course.courseId ?? ""}`}`
 }
 
 function sameCourse(course, selected) {
-  return course.name === selected.name && (course.kind || "") === (selected.kind || "")
+  return Boolean(selected) && course.key === selected.key
+}
+
+function listedCourseFromGroup(group) {
+  const totals = summarize([])
+  return {
+    key: group.key,
+    name: group.name,
+    kind: group.kind,
+    courseId: group.id ?? null,
+    ...totals,
+    conversionLabel: totals.conversion,
+  }
+}
+
+function groupByCourseId(courses) {
+  const groups = new Map()
+  for (const course of courses || []) {
+    const rows = groups.get(course.key)
+    if (rows) rows.push(course)
+    else groups.set(course.key, [course])
+  }
+  return [...groups.values()]
+    .map((rows) => {
+      const totals = summarize(rows)
+      return {
+        key: rows[0].key,
+        name: rows[0].name,
+        kind: rows[0].kind,
+        courseId: rows[0].courseId ?? null,
+        ...totals,
+        conversionLabel: totals.conversion,
+      }
+    })
+    .sort((left, right) => left.name.localeCompare(right.name) || (left.courseId ?? 0) - (right.courseId ?? 0))
+}
+
+function scopeRange(dates) {
+  if (!dates.length) return {}
+  const sorted = [...dates].sort()
+  return { from: sorted[0], to: sorted[sorted.length - 1] }
 }
 
 const REPORT_FETCH_TIMEOUT_MS = 20000
+const FLOW_FETCH_TIMEOUT_MS = 300000
+const CALL_PAGE_SIZE = 50
+const COURSE_CALL_LIMIT = 20000
+const DATE_INPUT_DELAY_MS = 400
+const LOADING_STATUS = "Loading course flow…"
 const LOAD_ERROR = "Unable to load report. Please try again."
 const TIMEOUT_ERROR = "The report request timed out. Please try again."
 
-async function fetchReportJson(url) {
+function usableDate(value, min, max) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false
+  return (!min || value >= min) && (!max || value <= max)
+}
+
+function DateInput({ value, min, max, onChange }) {
+  const [draft, setDraft] = useState(value)
+  const timer = useRef(0)
+  const inputRef = useRef(null)
+  const latest = useRef(value)
+  latest.current = value
+
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) setDraft(value)
+  }, [value])
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  function commit(next) {
+    window.clearTimeout(timer.current)
+    if (next !== latest.current && usableDate(next, min, max)) onChange(next)
+  }
+
+  return (
+    <input
+      ref={inputRef}
+      type="date"
+      value={draft}
+      min={min}
+      max={max}
+      onChange={(event) => {
+        const next = event.target.value
+        setDraft(next)
+        window.clearTimeout(timer.current)
+        timer.current = window.setTimeout(() => commit(next), DATE_INPUT_DELAY_MS)
+      }}
+      onBlur={(event) => {
+        commit(event.target.value)
+        if (!usableDate(event.target.value, min, max)) setDraft(latest.current)
+      }}
+    />
+  )
+}
+
+async function fetchReportJson(url, timeout = REPORT_FETCH_TIMEOUT_MS) {
   const controller = new AbortController()
-  const timer = window.setTimeout(() => controller.abort(), REPORT_FETCH_TIMEOUT_MS)
+  const timer = window.setTimeout(() => controller.abort(), timeout)
   try {
     const response = await fetch(url, { signal: controller.signal })
     const body = await response.json()
@@ -139,13 +226,11 @@ function DateMenu({ value, dates, disabled, onChange }) {
 }
 
 export default function App() {
-  const [reports, setReports] = useState([])
-  const [dates, setDates] = useState([])
-  const [status, setStatus] = useState("Loading saved reports…")
+  const [flow, setFlow] = useState(null)
+  const [status, setStatus] = useState(LOADING_STATUS)
   const [copyMessage, setCopyMessage] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [listReady, setListReady] = useState(false)
-  const loadedDates = useRef(new Set())
+  const [courseCalls, setCourseCalls] = useState({ scope: "", calls: [], loading: false })
+  const [callGroup, setCallGroup] = useState("all")
   const [dateFilter, setDateFilter] = useState("")
   const [rangeFrom, setRangeFrom] = useState("")
   const [rangeTo, setRangeTo] = useState("")
@@ -166,45 +251,32 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
-    async function loadList() {
+    async function loadFlow() {
       try {
-        const { response, body } = await fetchReportJson("/api/reports")
-        if (!response.ok || !Array.isArray(body.reports)) throw new Error(LOAD_ERROR)
-        const found = [
-          ...new Set(
-            body.reports
-              .map((name) => {
-                const match = /^courses-(\d{4}-\d{2}-\d{2})\.txt$/.exec(String(name))
-                return match ? match[1] : ""
-              })
-              .filter(Boolean),
-          ),
-        ].sort().reverse()
+        const { response, body } = await fetchReportJson("/api/flow", FLOW_FETCH_TIMEOUT_MS)
+        if (!response.ok || !Array.isArray(body.days) || !Array.isArray(body.groups)) throw new Error(body.error || LOAD_ERROR)
         if (cancelled) return
-        const newest = found[0] || ""
-        setDates(found)
+        const newest = [...body.days].sort().reverse()[0] || ""
+        setFlow(body)
         setDateFilter((current) => current || newest)
         setCompareFrom((current) => current || newest)
         setCompareTo((current) => current || newest)
         setDailyFrom((current) => current || newest)
         setDailyTo((current) => current || newest)
-        setListReady(true)
-        if (!found.length) {
-          setStatus("No saved reports yet.")
-          setLoading(false)
-        }
+        setStatus(body.days.length ? "" : "No calls found.")
       } catch (error) {
-        if (!cancelled) {
-          setStatus(error.message === TIMEOUT_ERROR ? TIMEOUT_ERROR : LOAD_ERROR)
-          setLoading(false)
-        }
+        if (!cancelled) setStatus(error.message === TIMEOUT_ERROR ? TIMEOUT_ERROR : LOAD_ERROR)
       }
     }
-    loadList()
+    loadFlow()
     return () => {
       cancelled = true
     }
   }, [])
+
+  const dates = useMemo(() => (flow ? [...flow.days].sort().reverse() : []), [flow])
+  const flowReports = useMemo(() => buildFlowReports(flow), [flow])
+  const groupsByKey = useMemo(() => new Map((flow?.groups || []).map((group) => [group.key, group])), [flow])
 
   const activeDates = useMemo(() => {
     if (!dateFilter) return []
@@ -213,14 +285,14 @@ export default function App() {
     return dates.includes(dateFilter) ? [dateFilter] : []
   }, [dates, dateFilter, rangeFrom, rangeTo])
 
-  const dateCourses = useMemo(() => coursesForDates(reports, activeDates), [reports, activeDates])
+  const dateCourses = useMemo(() => coursesForDates(flowReports, activeDates), [flowReports, activeDates])
 
   const comparisonDates = useMemo(
     () => datesInRange(dates, compareFrom, compareTo),
     [dates, compareFrom, compareTo],
   )
 
-  const comparisonDays = useMemo(() => compareDays(reports, comparisonDates), [reports, comparisonDates])
+  const comparisonDays = useMemo(() => compareDays(flowReports, comparisonDates), [flowReports, comparisonDates])
 
   const rangeLabel = useMemo(() => dateScopeLabel(dateFilter, rangeFrom, rangeTo), [dateFilter, rangeFrom, rangeTo])
 
@@ -232,16 +304,24 @@ export default function App() {
     }
   }, [dateCourses])
 
-  const allCourses = useMemo(() => coursesForDate(reports, "all"), [reports])
+  const allCourses = useMemo(() => coursesForDate(flowReports, "all"), [flowReports])
 
   const listedCourses = useMemo(() => {
-    const matched = applyFilters(dateCourses, { courseFilter: "all", reasonFilter: "all", search: courseSearch })
+    const totaled = groupByCourseId(dateCourses.filter((course) => course.kind === "SCO" || course.kind === "MCO"))
+    const byKey = new Map(totaled.map((course) => [course.key, course]))
+    const query = courseSearch.trim().toLowerCase()
+    const merged = (flow?.groups || [])
+      .filter((group) => group.kind === "SCO" || group.kind === "MCO")
+      .map((group) => byKey.get(group.key) || listedCourseFromGroup(group))
+      .filter((course) => !query || course.name.toLowerCase().includes(query))
+      .sort((left, right) => left.name.localeCompare(right.name) || (left.courseId ?? 0) - (right.courseId ?? 0))
     return {
-      sco: groupCoursesByName(matched.filter((course) => course.kind === "SCO")).map((course) => ({ ...course, kind: "SCO" })),
-      mco: groupCoursesByName(matched.filter((course) => course.kind === "MCO")).map((course) => ({ ...course, kind: "MCO" })),
-      v1: groupCoursesByName(matched.filter((course) => course.kind === "V1")).map((course) => ({ ...course, kind: "V1" })),
+      sco: merged.filter((course) => course.kind === "SCO"),
+      mco: merged.filter((course) => course.kind === "MCO"),
+      v1: [],
+      unclassified: summarize(dateCourses.filter((course) => course.key === UNCLASSIFIED)),
     }
-  }, [dateCourses, courseSearch])
+  }, [dateCourses, courseSearch, flow])
 
   const detailRows = useMemo(() => {
     if (!selectedCourse || !dateFilter) return []
@@ -254,13 +334,6 @@ export default function App() {
     [dates, dailyFrom, dailyTo],
   )
 
-  const neededKey = useMemo(() => {
-    let needed = activeDates
-    if (page === "comparison") needed = comparisonDates
-    else if (page === "detail") needed = [...activeDates, ...dailyDates]
-    return [...new Set(needed)].sort().reverse().join(",")
-  }, [page, activeDates, comparisonDates, dailyDates])
-
   const courseComparisonDays = useMemo(() => {
     if (!selectedCourse) return []
     const allowed = new Set(dailyDates)
@@ -268,70 +341,68 @@ export default function App() {
     return compareCourseRows(rows)
   }, [allCourses, selectedCourse, dailyDates])
 
+  const courseScope = useMemo(() => {
+    if (page !== "detail" || !selectedCourse || !activeDates.length) return ""
+    const range = dateFilter === "all" ? {} : scopeRange(activeDates)
+    return callsQuery({ group: selectedCourse.key, outcome: "notbooked", ...range, size: COURSE_CALL_LIMIT })
+  }, [page, selectedCourse, activeDates, dateFilter])
+
   useEffect(() => {
-    if (!listReady) return
-    const missing = neededKey ? neededKey.split(",").filter((date) => date && !loadedDates.current.has(date)) : []
-    if (!missing.length) {
-      setStatus((current) => (current === "No saved reports yet." ? current : ""))
-      setLoading(false)
-      return
-    }
+    if (!courseScope) return undefined
     let cancelled = false
-    setLoading(true)
-    setStatus("Loading saved reports…")
-    async function loadMissing() {
-      try {
-        for (const date of missing) {
-          const name = `courses-${date}.txt`
-          const { response, body } = await fetchReportJson(`/api/reports?name=${encodeURIComponent(name)}`)
-          if (!response.ok || typeof body.text !== "string") throw new Error(LOAD_ERROR)
-          const report = parseReport(body.text, body.name || name)
-          if (report.date !== date) throw new Error(LOAD_ERROR)
-          if (cancelled) return
-          loadedDates.current.add(report.date)
-          setReports((current) => {
-            const byDate = new Map(current.map((item) => [item.date, item]))
-            byDate.set(report.date, report)
-            return [...byDate.values()]
-          })
-        }
+    setCourseCalls({ scope: courseScope, calls: [], loading: true })
+    fetchReportJson(courseScope, FLOW_FETCH_TIMEOUT_MS).then(
+      ({ response, body }) => {
         if (cancelled) return
-        setStatus("")
-        setLoading(false)
-      } catch (error) {
-        if (!cancelled) {
-          setStatus(error.message === TIMEOUT_ERROR ? TIMEOUT_ERROR : LOAD_ERROR)
-          setLoading(false)
-        }
-      }
-    }
-    loadMissing()
+        if (!response.ok || !Array.isArray(body.calls)) throw new Error(body.error || LOAD_ERROR)
+        setCourseCalls({ scope: courseScope, calls: body.calls, loading: false })
+      },
+    ).catch((error) => {
+      if (cancelled) return
+      setCourseCalls({ scope: courseScope, calls: [], loading: false })
+      setStatus(error.message === TIMEOUT_ERROR ? TIMEOUT_ERROR : LOAD_ERROR)
+    })
     return () => {
       cancelled = true
     }
-  }, [listReady, neededKey])
+  }, [courseScope])
 
   const detail = useMemo(() => {
-    if (!detailRows.length) {
-      return { course: null, summary: summarize([]), reasonGroups: [], reasons: [] }
+    if (!selectedCourse) {
+      return { course: null, summary: summarize([]), reasonGroups: [], reasons: [], phones: [] }
     }
     const summary = summarize(detailRows)
+    const callsByReason = new Map()
+    if (courseCalls.scope === courseScope) {
+      for (const call of courseCalls.calls) {
+        const rows = callsByReason.get(call.reason)
+        if (rows) rows.push(call)
+        else callsByReason.set(call.reason, [call])
+      }
+    }
     const reasonGroups = aggregateReasons(detailRows, reasonFilter)
     const reasons = reasonGroups.map((group) => ({
       reason: group.reason,
       count: group.count,
-      calls: group.courses.flatMap((course) => course.calls),
+      calls: callsByReason.get(group.reason) || [],
     }))
+    const group = groupsByKey.get(selectedCourse.key)
+    const configured = (group?.phones || []).map((index) => flow.phones[index])
     const course = {
+      key: selectedCourse.key,
       name: selectedCourse.name,
       kind: selectedCourse.kind || "",
+      courseId: selectedCourse.courseId,
       date: rangeLabel,
       ...summary,
       conversionLabel: summary.conversion,
       reasons,
+      configIds: group?.configIds || [],
+      configNames: group?.configNames || [],
+      nameSource: group?.nameSource || "",
     }
-    return { course, summary, reasonGroups, reasons }
-  }, [detailRows, reasonFilter, selectedCourse, rangeLabel])
+    return { course, summary, reasonGroups, reasons, phones: phoneRows(detailRows, configured) }
+  }, [detailRows, reasonFilter, selectedCourse, rangeLabel, courseCalls, courseScope, groupsByKey, flow])
 
   const overviewSummary = useMemo(
     () => ({
@@ -365,12 +436,12 @@ export default function App() {
     return names
   }, [detailRows, reasonFilter])
 
-  const neededLoaded = useMemo(() => {
-    const have = new Set(reports.map((report) => report.date))
-    return neededKey.split(",").filter(Boolean).every((date) => have.has(date))
-  }, [reports, neededKey])
+  const comparisonLoaded = Boolean(flow)
+  const dailyLoaded = Boolean(flow)
 
-  const ready = !loading && !status && neededLoaded
+  const listShown = dates.length > 0
+  const ready = listShown && Boolean(flow)
+  const apiRange = useMemo(() => (dateFilter === "all" ? {} : scopeRange(activeDates)), [dateFilter, activeDates])
 
   useEffect(() => {
     if (!dates.length) return
@@ -386,10 +457,11 @@ export default function App() {
   }, [dateFilter, rangeFrom, rangeTo, reasonFilter, courseSearch, page, selectedCourse])
 
   function changeDate(value) {
+    const start = dates.includes(dateFilter) ? dateFilter : dates[0] || ""
     setDateFilter(value)
     if (value === "range") {
-      setRangeFrom((current) => current || dates[dates.length - 1] || "")
-      setRangeTo((current) => current || dates[0] || "")
+      setRangeFrom((current) => current || start)
+      setRangeTo((current) => current || start)
     }
   }
 
@@ -402,11 +474,16 @@ export default function App() {
   }
 
   function openCourse(course) {
-    setSelectedCourse({ name: course.name, kind: course.kind || "" })
+    setSelectedCourse({ key: course.key, name: course.name, kind: course.kind || "", courseId: course.courseId ?? null })
     setDetailReturn(page === "v1" ? "v1" : "courses")
     setPage("detail")
     setOpenReasons({})
     setOpenCalls({})
+  }
+
+  function openCourseCalls(nextPage, group) {
+    setCallGroup(group)
+    setPage(nextPage)
   }
 
   function copy(id, text) {
@@ -485,6 +562,14 @@ export default function App() {
             <span className="nav-icon" aria-hidden="true">↗</span>
             <span>Daily Comparison</span>
           </button>
+          <button type="button" className={page === "unbooked" ? "active" : ""} onClick={() => openCourseCalls("unbooked", "all")}>
+            <span className="nav-icon" aria-hidden="true">?</span>
+            <span>Unbooked Analysis</span>
+          </button>
+          <button type="button" className={page === "booked" ? "active" : ""} onClick={() => openCourseCalls("booked", "all")}>
+            <span className="nav-icon" aria-hidden="true">✓</span>
+            <span>Booked Calls</span>
+          </button>
         </nav>
         <button type="button" className="nav-collapse" onClick={() => setNavCollapsed((current) => !current)}>
           <span className="nav-icon" aria-hidden="true">{navCollapsed ? "›" : "‹"}</span>
@@ -502,7 +587,7 @@ export default function App() {
         <div>
           <h1>Course booking reports</h1>
           <p>
-            {page === "overview" ? "Overall dashboard" : page === "courses" ? "Course list" : page === "v1" ? "V1 Course List" : page === "comparison" ? "Daily Comparison" : "Course detail"}
+            {page === "overview" ? "Overall dashboard" : page === "courses" ? "Course list" : page === "v1" ? "V1 Course List" : page === "comparison" ? "Daily Comparison" : page === "unbooked" ? "Unbooked Analysis" : page === "booked" ? "Booked Calls" : "Course detail"}
           </p>
         </div>
         {page === "overview" ? (
@@ -544,22 +629,20 @@ export default function App() {
           <>
             <label>
               From date
-              <input
-                type="date"
+              <DateInput
                 value={rangeFrom}
                 min={dates[dates.length - 1] || ""}
                 max={dates[0] || ""}
-                onChange={(event) => setRangeFrom(event.target.value)}
+                onChange={setRangeFrom}
               />
             </label>
             <label>
               To date
-              <input
-                type="date"
+              <DateInput
                 value={rangeTo}
                 min={dates[dates.length - 1] || ""}
                 max={dates[0] || ""}
-                onChange={(event) => setRangeTo(event.target.value)}
+                onChange={setRangeTo}
               />
             </label>
           </>
@@ -600,10 +683,11 @@ export default function App() {
         />
       ) : null}
 
-      {ready && page === "comparison" ? (
+      {listShown && page === "comparison" ? (
         <DateComparison
           title="Daily Comparison"
           days={comparisonDays}
+          loading={!comparisonLoaded}
           from={compareFrom}
           to={compareTo}
           earliestDate={dates[dates.length - 1] || ""}
@@ -617,6 +701,7 @@ export default function App() {
         <CourseList
           scoCourses={listedCourses.sco}
           mcoCourses={listedCourses.mco}
+          unclassified={listedCourses.unclassified}
           search={courseSearch}
           onSearch={setCourseSearch}
           onOpenCourse={openCourse}
@@ -636,6 +721,9 @@ export default function App() {
         <CourseDetail
           course={detail.course}
           summary={detail.summary}
+          phones={detail.phones}
+          callsLoading={courseCalls.loading}
+          onOpenBooked={() => openCourseCalls("booked", detail.course?.key || "all")}
           reasons={detail.reasons}
           reasonGroups={detail.reasonGroups}
           reasonFilter={reasonFilter}
@@ -647,6 +735,7 @@ export default function App() {
           onToggleReason={(key) => setOpenReasons((current) => ({ ...current, [key]: !current[key] }))}
           onToggleCall={(key) => setOpenCalls((current) => ({ ...current, [key]: !current[key] }))}
           dailyComparison={courseComparisonDays}
+          dailyLoading={!dailyLoaded}
           dailyFrom={dailyFrom}
           dailyTo={dailyTo}
           earliestDate={dates[dates.length - 1] || ""}
@@ -663,6 +752,28 @@ export default function App() {
               reasonFilter,
             })
           }}
+        />
+      ) : null}
+
+      {ready && page === "unbooked" ? (
+        <UnbookedAnalysis
+          courses={dateCourses}
+          groups={flow.groups}
+          range={apiRange}
+          rangeLabel={rangeLabel}
+          group={callGroup}
+          onGroup={setCallGroup}
+        />
+      ) : null}
+
+      {ready && page === "booked" ? (
+        <BookedCalls
+          courses={dateCourses}
+          groups={flow.groups}
+          range={apiRange}
+          rangeLabel={rangeLabel}
+          group={callGroup}
+          onGroup={setCallGroup}
         />
       ) : null}
     </main>
@@ -749,12 +860,13 @@ function DateComparison({
   note = "Each day compared with the previous day in this range. Counts show percentage change. Conversion shows percentage-point change.",
   controls = true,
   courseName = "",
+  loading = false,
 }) {
   const metrics = [
     ["totalCalls", "Total Calls"],
     ["successful", "Successful Bookings"],
-    ["notCompleted", "Booking Not Completed"],
-    ["unclear", "Unclear Calls"],
+    ["notCompleted", "Not Booked (Saved Reason)"],
+    ["unclear", "Reason Not Available"],
     ["conversion", "Conversion %"],
   ]
   return (
@@ -764,15 +876,15 @@ function DateComparison({
       {controls ? <div className="filters range-filters comparison-filters">
         <label>
           From date
-          <input type="date" value={from} min={earliestDate} max={latestDate} onChange={(event) => onFrom(event.target.value)} />
+          <DateInput value={from} min={earliestDate} max={latestDate} onChange={onFrom} />
         </label>
         <label>
           To date
-          <input type="date" value={to} min={earliestDate} max={latestDate} onChange={(event) => onTo(event.target.value)} />
+          <DateInput value={to} min={earliestDate} max={latestDate} onChange={onTo} />
         </label>
       </div> : null}
-      {days.length ? <TrendChart days={days} /> : <p className="empty">No matching records found.</p>}
-      {days.length ? <div className="comparison-scroll">
+      {loading ? null : days.length ? <TrendChart days={days} /> : <p className="empty">No matching records found.</p>}
+      {!loading && days.length ? <div className="comparison-scroll">
         <table className="comparison">
           <thead>
             <tr>
@@ -805,12 +917,12 @@ function DateComparison({
   )
 }
 
-function CourseDailyComparison({ courseName, days, from, to, earliestDate, latestDate, onFrom, onTo }) {
+function CourseDailyComparison({ courseName, days, loading, from, to, earliestDate, latestDate, onFrom, onTo }) {
   const metrics = [
     ["totalCalls", "Total Calls"],
     ["successful", "Successful Bookings"],
-    ["notCompleted", "Booking Not Completed"],
-    ["unclear", "Unclear"],
+    ["notCompleted", "Not Booked (Saved Reason)"],
+    ["unclear", "Reason Not Available"],
     ["conversion", "Conversion %"],
   ]
   return (
@@ -820,15 +932,15 @@ function CourseDailyComparison({ courseName, days, from, to, earliestDate, lates
       <div className="filters range-filters comparison-filters">
         <label>
           Comparison from
-          <input type="date" value={from} min={earliestDate} max={latestDate} onChange={(event) => onFrom(event.target.value)} />
+          <DateInput value={from} min={earliestDate} max={latestDate} onChange={onFrom} />
         </label>
         <label>
           Comparison to
-          <input type="date" value={to} min={earliestDate} max={latestDate} onChange={(event) => onTo(event.target.value)} />
+          <DateInput value={to} min={earliestDate} max={latestDate} onChange={onTo} />
         </label>
       </div>
-      {days.length > 1 ? <TrendChart days={days} /> : <p className="empty">No matching records found.</p>}
-      {days.length > 1 ? <div className="comparison-scroll">
+      {loading ? null : days.length > 1 ? <TrendChart days={days} /> : <p className="empty">No matching records found.</p>}
+      {!loading && days.length > 1 ? <div className="comparison-scroll">
         <table className="comparison">
           <thead>
             <tr>
@@ -867,18 +979,20 @@ function CourseRows({ courses, onOpenCourse }) {
     <button
       type="button"
       className="course-row"
-      key={course.name}
+      key={course.key}
       data-course={course.name}
       data-kind={course.kind || undefined}
+      data-course-id={course.courseId ?? undefined}
       onClick={() => onOpenCourse(course)}
     >
       <span className="course-row-name">
         <strong>{course.name}</strong>
+        <span className="date-tag">{course.kind === "MCO" ? "Organization" : "Golf Course"} ID {course.courseId}</span>
       </span>
       <Metric label="Total Calls" value={course.totalCalls} />
       <Metric label="Successful Bookings" value={course.successful} />
-      <Metric label="Booking Not Completed" value={course.notCompleted} />
-      <Metric label="Unclear Calls" value={course.unclear} />
+      <Metric label="Not Booked (Saved Reason)" value={course.notCompleted} />
+      <Metric label="Reason Not Available" value={course.unclear} />
       <Metric label="Conversion" value={course.conversionLabel} />
     </button>
   ))
@@ -906,7 +1020,7 @@ function V1CourseList({ courses, search, onSearch, onOpenCourse }) {
   )
 }
 
-function CourseList({ scoCourses, mcoCourses, search, onSearch, onOpenCourse }) {
+function CourseList({ scoCourses, mcoCourses, unclassified, search, onSearch, onOpenCourse }) {
   const total = scoCourses.length + mcoCourses.length
   return (
     <section className="course-list" aria-label="Courses" data-count={total}>
@@ -930,6 +1044,12 @@ function CourseList({ scoCourses, mcoCourses, search, onSearch, onOpenCourse }) 
         <h3>MCO list {mcoCourses.length}</h3>
         <CourseRows courses={mcoCourses} onOpenCourse={onOpenCourse} />
       </div>
+      {unclassified?.totalCalls ? (
+        <p className="chart-note" data-unclassified={unclassified.totalCalls}>
+          Unclassified calls: {unclassified.totalCalls}. Successful bookings {unclassified.successful}.
+          These calls have a blank phone, a phone that is not in voice_numbers, or a phone that conflicts with the conversation's course ID. They are not placed on a course.
+        </p>
+      ) : null}
     </section>
   )
 }
@@ -937,6 +1057,9 @@ function CourseList({ scoCourses, mcoCourses, search, onSearch, onOpenCourse }) 
 function CourseDetail({
   course,
   summary,
+  phones = [],
+  callsLoading = false,
+  onOpenBooked,
   reasons,
   reasonGroups,
   reasonFilter,
@@ -950,6 +1073,7 @@ function CourseDetail({
   onCopy,
   onDownload,
   dailyComparison = [],
+  dailyLoading = false,
   dailyFrom = "",
   dailyTo = "",
   earliestDate = "",
@@ -975,13 +1099,23 @@ function CourseDetail({
             <button type="button" className="copy" onClick={onDownload}>
               Download Report
             </button>
+            <button type="button" className="view" onClick={onOpenBooked}>
+              View booked calls
+            </button>
           </div>
         </div>
+        <p className="chart-note">
+          {course.kind === "MCO" ? "Organization" : "Golf Course"} ID {course.courseId}
+          {course.configIds.length ? ` · Configuration ID ${course.configIds.join(", ")}` : " · No voice configuration"}
+          {course.configNames.length && !course.configNames.includes(course.name) ? ` · Configured as ${course.configNames.join(", ")}` : ""}
+        </p>
         <SummaryCards summary={summary} />
       </section>
+      <PhoneTable phones={phones} />
       <CourseDailyComparison
         courseName={course.name}
         days={dailyComparison}
+        loading={dailyLoading}
         from={dailyFrom}
         to={dailyTo}
         earliestDate={earliestDate}
@@ -1005,6 +1139,10 @@ function CourseDetail({
       </section>
       <section className="reasons" aria-label="Failure reasons">
         <h3>Failure Reasons</h3>
+        <p className="chart-note">
+          Unbooked calls with the failure reason saved for that Call ID. Calls with no saved reason are listed under {REASON_NOT_AVAILABLE}.
+          {callsLoading ? " Loading calls…" : ""}
+        </p>
         {reasons.length === 0 ? <p className="empty">No matching records found.</p> : null}
         {reasons.map((reason) => {
           const key = `${courseKey(course)}|${reason.reason}`
@@ -1106,13 +1244,14 @@ function CallList({ calls, course, reasonName, openCalls, copiedId, onToggleCall
   return (
     <ul className="calls">
       {(calls || []).map((call, index) => {
-        const key = `${course.date}|${course.name}|${reasonName}|${index}|${call.callId || ""}`
+        const key = `${course.date}|${course.key || course.name}|${reasonName}|${index}|${call.callId || ""}`
         const open = Boolean(openCalls[key])
         return (
           <li key={key} data-call-id={call.callId || ""}>
             <div className="call-head">
               <p>
                 <span>Call ID</span> {call.callId || "Not stated"}
+                {call.date ? <span className="date-tag">{call.date}</span> : null}
               </p>
               <button type="button" className="view" onClick={() => onToggleCall(key)}>
                 {open ? "Hide details" : "View details"}
@@ -1127,11 +1266,17 @@ function CallList({ calls, course, reasonName, openCalls, copiedId, onToggleCall
             {open ? (
               <>
                 <p>
-                  <span>What happened</span> {call.whatHappened || "Not stated"}
+                  <span>Why not completed</span> {call.whyNotCompleted || REASON_NOT_AVAILABLE}
                 </p>
                 <p>
-                  <span>Why not completed</span> {call.whyNotCompleted || "Not stated"}
+                  <span>What happened</span> {call.whatHappened || "Not saved"}
                 </p>
+                {call.phone ? (
+                  <p>
+                    <span>Phone</span> {call.phone}
+                  </p>
+                ) : null}
+                <Transcript callId={call.callId} available={call.hasTranscript} />
               </>
             ) : null}
           </li>
@@ -1141,13 +1286,325 @@ function CallList({ calls, course, reasonName, openCalls, copiedId, onToggleCall
   )
 }
 
+function Transcript({ callId, available = true }) {
+  const [state, setState] = useState({ open: false, loading: false, text: "", error: "" })
+  async function toggle() {
+    if (state.open) {
+      setState((current) => ({ ...current, open: false }))
+      return
+    }
+    if (state.text || state.error) {
+      setState((current) => ({ ...current, open: true }))
+      return
+    }
+    setState({ open: true, loading: true, text: "", error: "" })
+    try {
+      const { response, body } = await fetchReportJson(`/api/transcript?callId=${encodeURIComponent(callId)}`, 60000)
+      if (!response.ok) throw new Error(body.error || "Transcript not found.")
+      setState({ open: true, loading: false, text: body.transcript || "", error: body.transcript ? "" : "No transcript saved for this call." })
+    } catch (error) {
+      setState({ open: true, loading: false, text: "", error: error.message || "Transcript could not be loaded." })
+    }
+  }
+  if (!callId) return null
+  return (
+    <div className="transcript" data-call-id={callId}>
+      <button type="button" className="view" onClick={toggle} disabled={!available}>
+        {!available ? "No transcript" : state.open ? "Hide transcript" : "Open transcript"}
+      </button>
+      {state.open ? (
+        state.loading ? <p className="empty">Loading transcript…</p>
+          : state.error ? <p className="empty">{state.error}</p>
+            : <pre className="transcript-text">{state.text}</pre>
+      ) : null}
+    </div>
+  )
+}
+
+function PhoneTable({ phones }) {
+  if (!phones.length) return null
+  return (
+    <section className="chart" aria-label="Phone numbers">
+      <h3>Phone numbers</h3>
+      <p className="chart-note">Calls for this ID by the phone they came in on. Configured phones come from voice_channel_configurations and voice_numbers.</p>
+      <div className="comparison-scroll">
+        <table className="comparison">
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Configured</th>
+              <th>Total Calls</th>
+              <th>With Transcript</th>
+              <th>Without Transcript</th>
+              <th>Successful Bookings</th>
+              <th>Not Booked (Saved Reason)</th>
+              <th>Reason Not Available</th>
+            </tr>
+          </thead>
+          <tbody>
+            {phones.map((row) => (
+              <tr key={row.phone || "blank"} data-phone={row.phone}>
+                <td>{row.phone || "(blank)"}</td>
+                <td>{row.configured ? "Yes" : "No"}</td>
+                <td>{row.total}</td>
+                <td>{row.withTranscript}</td>
+                <td>{row.total - row.withTranscript}</td>
+                <td>{row.booked}</td>
+                <td>{row.saved}</td>
+                <td>{row.unknown}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function GroupFilter({ groups, group, onGroup }) {
+  const named = groups.filter((item) => item.kind).sort((left, right) => left.name.localeCompare(right.name))
+  return (
+    <label>
+      Course
+      <select value={group} onChange={(event) => onGroup(event.target.value)}>
+        <option value="all">All calls</option>
+        <option value="SCO">All SCO courses</option>
+        <option value="MCO">All MCO organizations</option>
+        <option value={UNCLASSIFIED}>Unclassified calls</option>
+        {named.map((item) => (
+          <option key={item.key} value={item.key}>
+            {item.name} ({item.kind} {item.id})
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function usePagedCalls(query) {
+  const [state, setState] = useState({ query: "", total: 0, calls: [], loading: false, error: "" })
+  useEffect(() => {
+    let cancelled = false
+    setState((current) => ({ ...current, query, loading: true, error: "" }))
+    fetchReportJson(query, FLOW_FETCH_TIMEOUT_MS).then(
+      ({ response, body }) => {
+        if (cancelled) return
+        if (!response.ok || !Array.isArray(body.calls)) throw new Error(body.error || LOAD_ERROR)
+        setState({ query, total: body.total, calls: body.calls, loading: false, error: "" })
+      },
+    ).catch((error) => {
+      if (!cancelled) setState({ query, total: 0, calls: [], loading: false, error: error.message || LOAD_ERROR })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [query])
+  return state
+}
+
+function Pager({ page, total, onPage }) {
+  const pages = Math.max(1, Math.ceil(total / CALL_PAGE_SIZE))
+  return (
+    <div className="pager">
+      <button type="button" className="view" disabled={page <= 0} onClick={() => onPage(page - 1)}>
+        Previous
+      </button>
+      <span>
+        Page {Math.min(page + 1, pages)} of {pages} · {total} {total === 1 ? "call" : "calls"}
+      </span>
+      <button type="button" className="view" disabled={page + 1 >= pages} onClick={() => onPage(page + 1)}>
+        Next
+      </button>
+    </div>
+  )
+}
+
+function CallTable({ calls, showReason }) {
+  const [open, setOpen] = useState({})
+  if (!calls.length) return <p className="empty">No matching records found.</p>
+  return (
+    <ul className="calls">
+      {calls.map((call) => {
+        const isOpen = Boolean(open[call.callId])
+        return (
+          <li key={call.callId} data-call-id={call.callId} data-outcome={call.outcome}>
+            <div className="call-head call-head-wide">
+              <p>
+                <span>Call ID</span> {call.callId}
+                <span className="date-tag">{call.date}</span>
+              </p>
+              <p>
+                <span>{call.kind || "Unclassified"}</span> {call.kind ? `${call.courseName} (${call.courseId})` : "No Golf Course ID or Organization ID"}
+              </p>
+              <button type="button" className="view" onClick={() => setOpen((current) => ({ ...current, [call.callId]: !current[call.callId] }))}>
+                {isOpen ? "Hide details" : "View details"}
+              </button>
+            </div>
+            {showReason ? (
+              <p>
+                <span>Why not completed</span> {call.whyNotCompleted || REASON_NOT_AVAILABLE}
+              </p>
+            ) : null}
+            {isOpen ? (
+              <>
+                {showReason ? (
+                  <p>
+                    <span>What happened</span> {call.whatHappened || "Not saved"}
+                  </p>
+                ) : null}
+                <p>
+                  <span>Phone</span> {call.phone || "(blank)"}
+                </p>
+                <Transcript callId={call.callId} available={call.hasTranscript} />
+              </>
+            ) : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function UnbookedAnalysis({ courses, groups, range, rangeLabel, group, onGroup }) {
+  const [reason, setReason] = useState("all")
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(0)
+  const scoped = useMemo(() => courses.filter((course) => {
+    if (group === "all") return true
+    if (group === "SCO" || group === "MCO") return course.kind === group
+    return course.key === group
+  }), [courses, group])
+  const summary = useMemo(() => summarize(scoped), [scoped])
+  const reasonGroups = useMemo(() => aggregateReasons(scoped), [scoped])
+  const byKind = useMemo(() => [
+    ["SCO", scoped.filter((course) => course.kind === "SCO")],
+    ["MCO", scoped.filter((course) => course.kind === "MCO")],
+    ["Unclassified", scoped.filter((course) => course.key === UNCLASSIFIED)],
+  ].map(([label, rows]) => ({ label, ...summarize(rows) })), [scoped])
+  useEffect(() => setPage(0), [group, reason, search, range.from, range.to])
+  const query = callsQuery({ outcome: "notbooked", group, reason, q: search.trim(), ...range, page, size: CALL_PAGE_SIZE })
+  const paged = usePagedCalls(query)
+  return (
+    <>
+      <section className="summary" aria-label="Unbooked analysis">
+        <div className="summary-head">
+          <h2>Why calls did not book · {rangeLabel}</h2>
+        </div>
+        <SummaryCards summary={summary} />
+      </section>
+      <section className="chart" aria-label="Totals by classification">
+        <h3>Totals by classification</h3>
+        <div className="comparison-scroll">
+          <table className="comparison">
+            <thead>
+              <tr>
+                <th>Classification</th>
+                <th>Total Calls</th>
+                <th>With Transcript</th>
+                <th>Without Transcript</th>
+                <th>Successful Bookings</th>
+                <th>Not Booked (Saved Reason)</th>
+                <th>Reason Not Available</th>
+                <th>Conversion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {byKind.map((row) => (
+                <tr key={row.label} data-kind={row.label}>
+                  <td>{row.label}</td>
+                  <td>{row.totalCalls}</td>
+                  <td>{row.withTranscript}</td>
+                  <td>{row.withoutTranscript}</td>
+                  <td>{row.successful}</td>
+                  <td>{row.notCompleted}</td>
+                  <td>{row.unclear}</td>
+                  <td>{row.conversion}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <Charts summary={summary} reasonGroups={reasonGroups} courses={scoped} />
+      <section className="filters detail-filters" aria-label="Unbooked call filters">
+        <GroupFilter groups={groups} group={group} onGroup={onGroup} />
+        <label>
+          Failure reason
+          <select value={reason} onChange={(event) => setReason(event.target.value)}>
+            <option value="all">All reasons</option>
+            {reasonGroups.map((item) => (
+              <option key={item.reason} value={item.reason}>
+                {item.reason} ({item.count})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Call ID
+          <input type="search" value={search} placeholder="Search Call ID" onChange={(event) => setSearch(event.target.value)} />
+        </label>
+      </section>
+      <section className="reasons" aria-label="Unbooked calls">
+        <h3>Unbooked calls</h3>
+        <p className="chart-note">Each call shows the failure reason saved for its Call ID, or {REASON_NOT_AVAILABLE} when none was saved.</p>
+        <Pager page={page} total={paged.total} onPage={setPage} />
+        {paged.loading ? <p className="empty">Loading calls…</p> : paged.error ? <p className="empty">{paged.error}</p> : <CallTable calls={paged.calls} showReason />}
+      </section>
+    </>
+  )
+}
+
+function BookedCalls({ courses, groups, range, rangeLabel, group, onGroup }) {
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(0)
+  const booked = useMemo(() => summarize(courses.filter((course) => {
+    if (group === "all") return true
+    if (group === "SCO" || group === "MCO") return course.kind === group
+    return course.key === group
+  })), [courses, group])
+  useEffect(() => setPage(0), [group, search, range.from, range.to])
+  const query = callsQuery({ outcome: "booked", group, q: search.trim(), ...range, page, size: CALL_PAGE_SIZE })
+  const paged = usePagedCalls(query)
+  return (
+    <>
+      <section className="summary" aria-label="Booked calls">
+        <div className="summary-head">
+          <h2>Booked calls · {rangeLabel}</h2>
+        </div>
+        <p className="chart-note">
+          A call is booked when a bookings row has booking_session_id equal to its call_id, booking channel voice, and status completed, confirmed, or booked. Each call is listed once.
+        </p>
+        <div className="cards">
+          <SummaryCard label="Successful Bookings" value={booked.successful} tone="good" />
+          <SummaryCard label="Total Calls" value={booked.totalCalls} />
+          <SummaryCard label="Conversion" value={booked.conversion} />
+        </div>
+      </section>
+      <section className="filters detail-filters" aria-label="Booked call filters">
+        <GroupFilter groups={groups} group={group} onGroup={onGroup} />
+        <label>
+          Call ID
+          <input type="search" value={search} placeholder="Search Call ID" onChange={(event) => setSearch(event.target.value)} />
+        </label>
+      </section>
+      <section className="reasons" aria-label="Booked call list">
+        <Pager page={page} total={paged.total} onPage={setPage} />
+        {paged.loading ? <p className="empty">Loading calls…</p> : paged.error ? <p className="empty">{paged.error}</p> : <CallTable calls={paged.calls} showReason={false} />}
+      </section>
+    </>
+  )
+}
+
 function SummaryCards({ summary }) {
   return (
     <div className="cards">
       <SummaryCard label="Total Calls" value={summary.totalCalls} />
+      <SummaryCard label="With Transcript" value={summary.withTranscript ?? 0} />
+      <SummaryCard label="Without Transcript" value={summary.withoutTranscript ?? 0} />
       <SummaryCard label="Successful Bookings" value={summary.successful} tone="good" />
-      <SummaryCard label="Booking Not Completed" value={summary.notCompleted} tone="bad" />
-      <SummaryCard label="Unclear Calls" value={summary.unclear} tone="warn" />
+      <SummaryCard label="Not Booked" value={summary.notBooked ?? summary.notCompleted + summary.unclear} tone="bad" />
+      <SummaryCard label="Not Booked (Saved Reason)" value={summary.notCompleted} tone="bad" />
+      <SummaryCard label="Reason Not Available" value={summary.unclear} tone="warn" />
       <SummaryCard label="Conversion" value={summary.conversion} />
     </div>
   )
