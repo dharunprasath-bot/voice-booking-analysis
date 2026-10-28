@@ -9,8 +9,26 @@
 [functions.course-reports]
   included_files = ["../reports/courses-*.txt"]
 
+[functions.flow]
+  included_files = ["../netlify/flow-data/flow.json"]
+
+[functions.calls]
+  included_files = ["../netlify/flow-data/flow.json", "../netlify/flow-data/calls.json", "../netlify/flow-data/reasons/*"]
+
 [[redirects]]
   from = "/api/reports"
   to = "/.netlify/functions/course-reports"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/flow"
+  to = "/.netlify/functions/flow"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/calls"
+  to = "/.netlify/functions/calls"
   status = 200
   force = true
